@@ -37,11 +37,11 @@ export function SignUpPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     
-    if (!formData.email || !formData.password) {
+    if (!formData.email || !formData.password || !formData.full_name) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Please fill in all fields',
+        description: 'Please fill in all required fields',
       })
       return
     }
@@ -56,161 +56,117 @@ export function SignUpPage() {
     }
 
     try {
-      setLoading(true);
+      setLoading(true)
 
-      // 2. Create auth account
+      // Kullanıcı kaydı oluştur
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           data: {
-            role: 'customer',
             full_name: formData.full_name,
             phone: formData.phone,
           }
         }
-      });
+      })
 
       if (signUpError) {
-        throw new Error(signUpError.message);
+        throw signUpError
       }
 
       if (!authData.user) {
-        throw new Error("Kullanıcı oluşturulamadı");
-      }
-
-      // 3. Create customer record
-      const { error: customerError } = await supabase
-        .from('customers')
-        .insert({
-          id: authData.user.id,
-          full_name: formData.full_name,
-          phone: formData.phone,
-          email: formData.email,
-        });
-
-      if (customerError) {
-        throw new Error(customerError.message);
+        throw new Error('User could not be created')
       }
 
       toast({
         title: 'Success!',
         description: 'Account created. Please check your email for verification and then log in.',
-      });
-      navigate('/login');
+      })
+      
+      navigate('/login')
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message || 'Failed to create account',
-      });
+        description: error.message || 'An error occurred during signup',
+      })
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
   return (
-    <div className="flex h-screen items-center justify-center px-4">
-      <div className="w-full max-w-md space-y-8 rounded-lg border bg-card p-6 shadow-lg">
-        <div>
-          <h2 className="text-center text-3xl font-bold tracking-tight">
-            Customer Signup
-          </h2>
-          <p className="mt-2 text-center text-sm text-muted-foreground">
-            Create your account with your registered email
-          </p>
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-lg shadow-lg">
+        <div className="space-y-2 text-center">
+          <h1 className="text-3xl font-bold">Create an Account</h1>
+          <p className="text-muted-foreground">Enter your information to create an account</p>
         </div>
-
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="email">Email address</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                placeholder="Enter your registered email"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="password">Create Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                required
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                required
-                placeholder="••••••••"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="full_name">Full Name</Label>
-              <Input
-                id="full_name"
-                name="full_name"
-                type="text"
-                required
-                placeholder="Enter your full name"
-                value={formData.full_name}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                name="phone"
-                type="tel"
-                required
-                placeholder="Enter your phone number"
-                value={formData.phone}
-                onChange={handleChange}
-              />
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="full_name">Full Name *</Label>
+            <Input
+              id="full_name"
+              name="full_name"
+              type="text"
+              value={formData.full_name}
+              onChange={handleChange}
+              required
+            />
           </div>
-
-          <div>
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading}
-            >
-              {loading ? 'Creating account...' : 'Create Account'}
-            </Button>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email *</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
           </div>
-
-          <div className="text-center text-sm">
-            Already have an account?{' '}
-            <Button
-              variant="link"
-              className="p-0"
-              onClick={() => navigate('/login')}
-            >
-              Sign in
-            </Button>
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone</Label>
+            <Input
+              id="phone"
+              name="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={handleChange}
+            />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password *</Label>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm Password *</Label>
+            <Input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? 'Creating Account...' : 'Create Account'}
+          </Button>
         </form>
+        <div className="text-center text-sm">
+          <span className="text-muted-foreground">Already have an account? </span>
+          <Button variant="link" className="p-0" onClick={() => navigate('/login')}>
+            Log in
+          </Button>
+        </div>
       </div>
     </div>
   )

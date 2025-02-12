@@ -1,13 +1,16 @@
-import { Navigate, useLocation } from 'react-router-dom'
-import { useCustomerAuthStore } from '@/renderer/lib/stores/customer-auth-store'
+import { Navigate } from 'react-router-dom'
+import { useCustomerAuthStore } from '../lib/stores/customer-auth-store'
 
-export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+interface ProtectedRouteProps {
+  children: React.ReactNode
+}
+
+export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { session } = useCustomerAuthStore()
-  const location = useLocation()
 
   if (!session) {
-    return <Navigate to="/login" state={{ from: location }} replace />
+    return <Navigate to="/login" />
   }
 
-  return children
+  return <>{children}</>
 }
