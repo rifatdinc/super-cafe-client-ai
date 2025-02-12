@@ -10,35 +10,38 @@ class StreamClientService {
   private peer?: Peer;
   private stream?: MediaStream;
   private options?: StreamOptions;
+  private channel: RealtimeChannel;
 
   constructor(options?: StreamOptions) {
     this.options = options;
-    this.subscribeToCommands();
-  }
-
-  private subscribeToCommands() {
-    console.log('🎯 Subscribing to stream commands...');
     
-    supabase
-      .channel('stream-commands')
-      .on(
-        'broadcast',
-        { event: 'stream-start' },
-        async ({ payload }) => {
-          console.log('📡 Received stream start command:', payload);
-          const { adminPeerId } = payload;
+    // Channel'ı oluştur ve subscribe ol
+    this.channel = supabase.channel('stream_commands');
+    
+    // Subscribe to changes
+    this.channel.on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'stream_commands'
+      },
+      async (payload) => {
+        const { event, payload: commandPayload } = payload.new;
+        
+        if (event === 'stream-start') {
+          console.log('📡 Received stream start command:', commandPayload);
+          const { adminPeerId } = commandPayload;
           await this.startStream(adminPeerId);
-        }
-      )
-      .on(
-        'broadcast',
-        { event: 'stream-stop' },
-        () => {
+        } 
+        else if (event === 'stream-stop') {
           console.log('🛑 Received stream stop command');
           this.stopStream();
         }
-      )
-      .subscribe();
+      }
+    ).subscribe();
+    
+    console.log('🎯 Subscribed to stream commands');
   }
 
   private async getScreenStream() {
