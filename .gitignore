@@ -2,3 +2,4 @@ node_modules
 dist
 .vscode
 placeholder.mp4
+tsconfig.electron.tsbuildinfo
