@@ -31,6 +31,15 @@ export function SessionHistoryPage() {
   const fetchSessionHistory = async () => {
     setLoading(true)
     try {
+      if (!customer) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'No customer found',
+        })
+        return
+      }
+
       const { data, error } = await supabase
         .from('sessions')
         .select(`
@@ -50,7 +59,21 @@ export function SessionHistoryPage() {
         .limit(10)
 
       if (error) throw error
-      setSessions(data)
+      
+      // Transform the data to match SessionHistory type
+      const transformedData: SessionHistory[] = data.map((session: any) => ({
+        id: session.id,
+        start_time: session.start_time,
+        end_time: session.end_time,
+        duration: session.duration,
+        total_cost: session.total_cost,
+        computer: {
+          computer_number: session.computer[0]?.computer_number || '',
+          name: session.computer[0]?.name || ''
+        }
+      }))
+      
+      setSessions(transformedData)
     } catch (error) {
       toast({
         variant: 'destructive',

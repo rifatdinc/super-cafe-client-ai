@@ -47,6 +47,7 @@ export const useBalanceStore = create<BalanceStore>((set) => ({
         .eq('id', customerId)
         .single()
 
+      if (!newBalance) throw new Error('Failed to get updated balance')
       set({ balance: newBalance.balance })
     } catch (error) {
       console.error('Error adding balance:', error)

@@ -29,6 +29,15 @@ export function BalancePage() {
     }
 
     try {
+      if (!customer) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'No customer found',
+        })
+        return
+      }
+
       setLoading(true)
       await addBalance(customer.id, parseFloat(amount))
       toast({
@@ -36,11 +45,12 @@ export function BalancePage() {
         description: 'Balance added successfully',
       })
       navigate('/app/session')
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message,
+        description: errorMessage,
       })
     } finally {
       setLoading(false)

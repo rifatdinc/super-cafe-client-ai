@@ -49,14 +49,25 @@ export function SessionPage() {
 
   const handleStartSession = async () => {
     try {
+      if (!customer) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'No customer found',
+        })
+        return
+      }
+
       // For now, we're using a hardcoded computer ID. In reality, this should come from the selected computer
       await startSession('COMPUTER-1', customer.id)
       toast({
         title: 'Session Started',
         description: 'Your session has been started successfully',
       })
-    } catch (error) {
-      if (error.message.includes('Insufficient balance')) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
+      
+      if (error instanceof Error && errorMessage.includes('Insufficient balance')) {
         toast({
           variant: 'destructive',
           title: 'Insufficient Balance',
@@ -67,7 +78,7 @@ export function SessionPage() {
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: error.message,
+          description: errorMessage,
         })
       }
     }
@@ -80,11 +91,12 @@ export function SessionPage() {
         title: 'Session Ended',
         description: 'Your session has been ended successfully',
       })
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message,
+        description: errorMessage,
       })
     }
   }
