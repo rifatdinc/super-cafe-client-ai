@@ -70,14 +70,14 @@ export function SignUpPage() {
 
       if (signUpError) throw signUpError
 
-      // Create customer record with auth_id instead of id
+      // Create customer record with id from auth
       const { error: customerError } = await supabase
         .from('customers')
         .insert({
-          auth_id: authData.user?.id,
+          id: authData.user?.id,
           full_name: formData.full_name,
-          phone: formData.phone,
           email: formData.email,
+          phone: formData.phone,
           balance: 0
         })
 
