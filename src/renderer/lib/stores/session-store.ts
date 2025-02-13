@@ -37,11 +37,15 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
         .eq('key', 'minimum_balance')
         .single()
 
+      if (!settings) throw new Error('Minimum balance setting not found')
+
       const { data: customer } = await supabase
         .from('customers')
         .select('balance')
         .eq('id', customerId)
         .single()
+
+      if (!customer) throw new Error('Customer not found')
 
       const minBalance = settings.value.amount
       if (customer.balance < minBalance) {
@@ -54,6 +58,8 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
         .select('value')
         .eq('key', 'hourly_rate')
         .single()
+
+      if (!rateSettings) throw new Error('Hourly rate setting not found')
 
       // Start session
       const { data: session, error } = await supabase
@@ -71,7 +77,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
 
       set({ currentSession: session as Session })
     } catch (error) {
-      set({ error: error.message })
+      set({ error: error instanceof Error ? error.message : 'An unknown error occurred' })
       throw error
     } finally {
       set({ loading: false })
@@ -108,7 +114,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
 
       set({ currentSession: null })
     } catch (error) {
-      set({ error: error.message })
+      set({ error: error instanceof Error ? error.message : 'An unknown error occurred' })
       throw error
     } finally {
       set({ loading: false })
@@ -128,7 +134,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
       if (error && error.code !== 'PGRST116') throw error // PGRST116 is "no rows returned"
       set({ currentSession: data as Session })
     } catch (error) {
-      set({ error: error.message })
+      set({ error: error instanceof Error ? error.message : 'An unknown error occurred' })
     } finally {
       set({ loading: false })
     }
