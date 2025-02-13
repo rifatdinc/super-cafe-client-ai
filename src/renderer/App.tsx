@@ -6,7 +6,11 @@ import { LoadingSpinner } from "./components/ui/loading"
 import { LoginPage } from "./pages/login"
 import { SignUpPage } from "./pages/signup"
 import { DashboardPage } from "./pages/dashboard"
-import { ProtectedRoute } from "./components/ProtectedRoute"
+import { SessionPage } from "./pages/session"
+import { BalancePage } from "./pages/session/balance"
+import { SessionHistoryPage } from "./pages/session/history"
+import { CustomerProtectedRoute } from "./components/CustomerProtectedRoute"
+import { useCustomerAuthStore } from "./lib/stores/customer-auth-store"
 
 // Using HashRouter for Electron compatibility
 const routes = createHashRouter([
@@ -21,7 +25,7 @@ const routes = createHashRouter([
     children: [
       {
         path: "",
-        element: <Navigate to="/login" replace />
+        element: <Navigate to="/app/dashboard" replace />
       },
       {
         path: "login",
@@ -34,7 +38,7 @@ const routes = createHashRouter([
       {
         path: "app",
         element: (
-          <ProtectedRoute>
+          <CustomerProtectedRoute>
             <Suspense fallback={<LoadingSpinner />}>
               <div className="min-h-screen bg-background">
                 <main className="flex-1">
@@ -42,7 +46,7 @@ const routes = createHashRouter([
                 </main>
               </div>
             </Suspense>
-          </ProtectedRoute>
+          </CustomerProtectedRoute>
         ),
         children: [
           {
@@ -52,6 +56,18 @@ const routes = createHashRouter([
           {
             path: "dashboard",
             element: <DashboardPage />
+          },
+          {
+            path: "session",
+            element: <SessionPage />
+          },
+          {
+            path: "session/balance",
+            element: <BalancePage />
+          },
+          {
+            path: "session/history",
+            element: <SessionHistoryPage />
           }
         ]
       },

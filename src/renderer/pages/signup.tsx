@@ -16,11 +16,11 @@ interface SignupForm {
 
 export function SignUpPage() {
   const [formData, setFormData] = useState<SignupForm>({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    full_name: '',
-    phone: '',
+    email: 'mr.dinc41@gmail.com',
+    password: 'rafi41',
+    confirmPassword: 'rafi41',
+    full_name: 'Rifat dinc',
+    phone: '5362561240',
   })
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
@@ -56,56 +56,46 @@ export function SignUpPage() {
     }
 
     try {
-      setLoading(true);
-
-      // 2. Create auth account
+      setLoading(true)
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           data: {
-            role: 'customer',
             full_name: formData.full_name,
             phone: formData.phone,
           }
         }
-      });
+      })
 
-      if (signUpError) {
-        throw new Error(signUpError.message);
-      }
+      if (signUpError) throw signUpError
 
-      if (!authData.user) {
-        throw new Error("Kullanıcı oluşturulamadı");
-      }
-
-      // 3. Create customer record
+      // Create customer record with auth_id instead of id
       const { error: customerError } = await supabase
         .from('customers')
         .insert({
-          id: authData.user.id,
+          auth_id: authData.user?.id,
           full_name: formData.full_name,
           phone: formData.phone,
           email: formData.email,
-        });
+          balance: 0
+        })
 
-      if (customerError) {
-        throw new Error(customerError.message);
-      }
+      if (customerError) throw customerError
 
       toast({
         title: 'Success!',
-        description: 'Account created. Please check your email for verification and then log in.',
-      });
-      navigate('/login');
+        description: 'Account created successfully. You can now login.',
+      })
+      navigate('/login')
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message || 'Failed to create account',
-      });
+        description: error.message,
+      })
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 

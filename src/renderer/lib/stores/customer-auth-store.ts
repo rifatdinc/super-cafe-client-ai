@@ -4,6 +4,7 @@ import { Session, User } from '@supabase/supabase-js'
 
 interface Customer {
   id: string
+  auth_id: string
   full_name: string
   email: string
   phone: string
@@ -33,7 +34,7 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set) => ({
       const { data: customer, error } = await supabase
         .from('customers')
         .select('*')
-        .eq('id', session.user.id)
+        .eq('auth_id', session.user.id)
         .single()
 
       if (!error && customer) {
@@ -48,7 +49,7 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set) => ({
         const { data: customer, error } = await supabase
           .from('customers')
           .select('*')
-          .eq('id', session.user.id)
+          .eq('auth_id', session.user.id)
           .single()
 
         if (!error && customer) {
@@ -71,15 +72,15 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set) => ({
         throw new Error(authError.message)
       }
 
-      // Fetch customer data
+      // Fetch customer data using auth_id
       const { data: customer, error: customerError } = await supabase
         .from('customers')
         .select('*')
-        .eq('id', authData.user.id)
+        .eq('auth_id', authData.user.id)
         .single()
 
       if (customerError || !customer) {
-        throw new Error('Failed to fetch customer data after sign in.')
+        throw new Error('No customer account found. Please signup first.')
       }
 
       set({

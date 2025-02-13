@@ -13,8 +13,8 @@ interface LoginForm {
 
 export function LoginPage() {
   const [formData, setFormData] = useState<LoginForm>({
-    email: '',
-    password: '',
+    email: 'mr.dinc41@gmail.com',
+    password: 'rafi41',
   })
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
