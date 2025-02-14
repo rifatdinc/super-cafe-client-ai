@@ -14,7 +14,7 @@ interface CustomerAuthState {
   user: User | null
   session: Session | null
   customer: Customer | null
-  signIn: (email: string, password: string) => Promise<void>
+  signIn: (email: string, password: string) => Promise<{ success: boolean, error?: string, type?: string } | null>
   signOut: () => Promise<void>
   initialize: () => Promise<void>
   updateCustomer: (customerData: { id: string; full_name: string; email: string; phone: string }) => Promise<void>;
@@ -68,7 +68,7 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set) => ({
       })
 
       if (authError) {
-        throw new Error(authError.message)
+        return { success: false, error: authError.message }
       }
 
       // Fetch customer data using id
@@ -79,7 +79,16 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set) => ({
         .maybeSingle()
 
       if (customerError || !customer) {
-        throw new Error('No customer account found. Please signup first.')
+        return { success: false, error: 'No customer account found. Please signup first.' }
+      }
+
+      // Check if customer has sufficient balance
+      if (customer.balance <= 0) {
+        return { 
+          success: false, 
+          error: 'Insufficient balance. Please add balance to your account before logging in.',
+          type: 'balance'
+        }
       }
 
       // Get an available computer
@@ -92,7 +101,7 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set) => ({
 
       if (computerError) {
         console.error('Failed to find available computer:', computerError)
-        throw new Error('No available computers')
+        return { success: false, error: 'No available computers' }
       }
 
       // Create a new session
@@ -109,6 +118,7 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set) => ({
 
       if (sessionError) {
         console.error('Failed to create session:', sessionError)
+        return { success: false, error: 'Failed to create session' }
       }
 
       // Update computer status to in-use
@@ -120,6 +130,7 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set) => ({
 
         if (updateError) {
           console.error('Failed to update computer status:', updateError)
+          return { success: false, error: 'Failed to update computer status' }
         }
       }
 
@@ -128,9 +139,10 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set) => ({
         session: authData.session,
         customer,
       })
+      return { success: true }
     } catch (error: any) {
       console.error('Sign in error:', error)
-      throw error
+      return { success: false, error: error.message }
     }
   },
 

@@ -13,6 +13,7 @@ import { CustomerProtectedRoute } from "./components/CustomerProtectedRoute"
 import { useCustomerAuthStore } from "./lib/stores/customer-auth-store"
 import { useEffect, useState } from 'react';
 import { useComputerStore } from './lib/stores/computer-store';
+import { AddBalancePage } from './pages/add-balance';
 
 // Using HashRouter for Electron compatibility
 const routes = createHashRouter([
@@ -21,7 +22,7 @@ const routes = createHashRouter([
     element: (
       <>
         <Outlet />
-        <Toaster position="top-right" />
+        <Toaster position="bottom-right" />
       </>
     ),
     children: [
@@ -74,6 +75,10 @@ const routes = createHashRouter([
         ]
       },
       {
+        path: "add-balance",
+        element: <CustomerProtectedRoute><AddBalancePage /></CustomerProtectedRoute>
+      },
+      {
         path: "*",
         element: <NotFoundPage />
       }
@@ -87,8 +92,8 @@ function App() {
 
   useEffect(() => {
     // Electron kontekstinin yüklendiğini kontrol et
-    const checkElectron = () => {
-      if (window.electron?.getMachineId) {
+    const checkElectron = async () => {
+      if (await window.electron?.getMachineId()) {
         setIsElectronReady(true);
       } else {
         // Eğer henüz yüklenmediyse, kısa bir süre sonra tekrar dene
