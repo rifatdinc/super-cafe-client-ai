@@ -1,33 +1,28 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
-// Expose protected methods that allow the renderer process to use
-// the ipcRenderer without exposing the entire object
+// Basic IPC wrapper
 contextBridge.exposeInMainWorld('electron', {
   ipcRenderer: {
-    send: (channel: string, ...args: any[]) => {
-      // Whitelist channels
-      const validChannels = ['minimize-window', 'maximize-window', 'close-window']
-      if (validChannels.includes(channel)) {
-        ipcRenderer.send(channel, ...args)
-      }
+    invoke: (channel: string, data: any) => {
+      return ipcRenderer.invoke(channel, data)
     },
     on: (channel: string, func: (...args: any[]) => void) => {
-      const validChannels = ['window-state-change']
-      if (validChannels.includes(channel)) {
-        // Strip event as it includes `sender` 
-        ipcRenderer.on(channel, (_event, ...args) => func(...args))
-      }
+      ipcRenderer.on(channel, (event, ...args) => func(...args))
+    },
+    once: (channel: string, func: (...args: any[]) => void) => {
+      ipcRenderer.once(channel, (event, ...args) => func(...args))
     },
     removeListener: (channel: string, func: (...args: any[]) => void) => {
-      const validChannels = ['window-state-change']
-      if (validChannels.includes(channel)) {
-        // Strip event as it includes `sender`
-        ipcRenderer.removeListener(channel, (_event, ...args) => func(...args))
-      }
+      ipcRenderer.removeListener(channel, func)
     },
-    scanComputers: async (startIP: string, endIP: string) => {
-      console.log("Scanning computers from preload");
-      return ipcRenderer.invoke('scan-computers', { startIP, endIP });
-    },
+    send: (channel: string, data: any) => {
+      ipcRenderer.send(channel, data)
+    }
   },
+  getMachineId: () => {
+    return ipcRenderer.invoke('get-machine-id')
+  },
+  getSystemInfo: () => {
+    return ipcRenderer.invoke('get-system-info')
+  }
 })

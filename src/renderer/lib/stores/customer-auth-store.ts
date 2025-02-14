@@ -34,7 +34,7 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set) => ({
         .from('customers')
         .select('*')
         .eq('id', session.user.id)
-        .single()
+        .maybeSingle()
 
       if (!error && customer) {
         set({ customer })
@@ -49,7 +49,7 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set) => ({
           .from('customers')
           .select('*')
           .eq('id', session.user.id)
-          .single()
+          .maybeSingle()
 
         if (!error && customer) {
           set({ customer })
@@ -76,10 +76,51 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set) => ({
         .from('customers')
         .select('*')
         .eq('id', authData.user.id)
-        .single()
+        .maybeSingle()
 
       if (customerError || !customer) {
         throw new Error('No customer account found. Please signup first.')
+      }
+
+      // Get an available computer
+      const { data: computer, error: computerError } = await supabase
+        .from('computers')
+        .select('id')
+        .eq('status', 'available')
+        .limit(1)
+        .maybeSingle()
+
+      if (computerError) {
+        console.error('Failed to find available computer:', computerError)
+        throw new Error('No available computers')
+      }
+
+      // Create a new session
+      const { error: sessionError } = await supabase
+        .from('sessions')
+        .insert({
+          customer_id: authData.user.id,
+          computer_id: computer?.id,
+          hourly_rate: 0, // Varsayılan değer
+          status: 'active',
+          payment_status: 'unpaid',
+          start_time: new Date().toISOString()
+        })
+
+      if (sessionError) {
+        console.error('Failed to create session:', sessionError)
+      }
+
+      // Update computer status to in-use
+      if (computer?.id) {
+        const { error: updateError } = await supabase
+          .from('computers')
+          .update({ status: 'in-use' })
+          .eq('id', computer.id)
+
+        if (updateError) {
+          console.error('Failed to update computer status:', updateError)
+        }
       }
 
       set({
@@ -94,11 +135,45 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set) => ({
   },
 
   signOut: async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) {
-      throw new Error(error.message)
+    try {
+      // Get active sessions for the user
+      const { data: activeSessions } = await supabase
+        .from('sessions')
+        .select('id, computer_id')
+        .eq('customer_id', useCustomerAuthStore.getState().user?.id)
+        .eq('status', 'active')
+
+      // End all active sessions
+      if (activeSessions?.length > 0) {
+        for (const session of activeSessions) {
+          // Update session
+          await supabase
+            .from('sessions')
+            .update({ 
+              status: 'completed',
+              end_time: new Date().toISOString()
+            })
+            .eq('id', session.id)
+
+          // Update computer status back to available
+          if (session.computer_id) {
+            await supabase
+              .from('computers')
+              .update({ status: 'available' })
+              .eq('id', session.computer_id)
+          }
+        }
+      }
+
+      const { error } = await supabase.auth.signOut()
+      if (error) {
+        throw new Error(error.message)
+      }
+      set({ user: null, session: null, customer: null })
+    } catch (error: any) {
+      console.error('Sign out error:', error)
+      throw error
     }
-    set({ user: null, session: null, customer: null })
   },
 
   updateCustomer: async (customerData: { id: string; full_name: string; email: string; phone: string }) => {
@@ -108,7 +183,7 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set) => ({
         .update(customerData)
         .eq('id', customerData.id)
         .select('*')
-        .single();
+        .maybeSingle();
 
       if (error) {
         throw new Error(error.message);

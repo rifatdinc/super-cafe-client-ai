@@ -11,6 +11,8 @@ import { BalancePage } from "./pages/session/balance"
 import { SessionHistoryPage } from "./pages/session/history"
 import { CustomerProtectedRoute } from "./components/CustomerProtectedRoute"
 import { useCustomerAuthStore } from "./lib/stores/customer-auth-store"
+import { useEffect, useState } from 'react';
+import { useComputerStore } from './lib/stores/computer-store';
 
 // Using HashRouter for Electron compatibility
 const routes = createHashRouter([
@@ -80,7 +82,33 @@ const routes = createHashRouter([
 ])
 
 function App() {
-  return <RouterProvider router={routes} />
+  const { initializeComputer } = useComputerStore();
+  const [isElectronReady, setIsElectronReady] = useState(false);
+
+  useEffect(() => {
+    // Electron kontekstinin yüklendiğini kontrol et
+    const checkElectron = () => {
+      if (window.electron?.getMachineId) {
+        setIsElectronReady(true);
+      } else {
+        // Eğer henüz yüklenmediyse, kısa bir süre sonra tekrar dene
+        setTimeout(checkElectron, 100);
+      }
+    };
+
+    checkElectron();
+  }, []);
+
+  useEffect(() => {
+    // Electron hazır olduğunda initializeComputer'ı çağır
+    if (isElectronReady) {
+      initializeComputer().catch(error => {
+        console.error('Failed to initialize computer:', error);
+      });
+    }
+  }, [isElectronReady, initializeComputer]);
+
+  return <RouterProvider router={routes} />;
 }
 
-export default App
+export default App;

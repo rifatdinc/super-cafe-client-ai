@@ -1,101 +1,111 @@
-import { create } from 'zustand'
-import { supabase } from '../supabase'
+import { create } from 'zustand';
+import { supabase } from '../supabase';
 
 interface Computer {
-  id: string
-  computer_number: string
-  name: string
-  status: 'available' | 'in_use' | 'maintenance'
-  ip_address: string
-  mac_address: string
+  id: string;
+  machine_id: string;
+  name: string;
+  status: 'available' | 'in-use' | 'maintenance';
+  computer_number: string;
+  specifications?: string;
 }
 
 interface ComputerStore {
-  currentComputer: Computer | null
-  loading: boolean
-  error: string | null
-  initializeComputer: () => Promise<void>
+  currentComputer: Computer | null;
+  initializeComputer: () => Promise<void>;
+  updateComputer: (data: Partial<Computer>) => Promise<void>;
 }
 
 export const useComputerStore = create<ComputerStore>((set) => ({
   currentComputer: null,
-  loading: false,
-  error: null,
 
   initializeComputer: async () => {
-    set({ loading: true, error: null })
     try {
-      // Get computer info from main process
-      const computerInfo = await window.Electron.ipcRenderer.invoke('get-computer-info')
+      if (!window.electron?.getMachineId) {
+        throw new Error('getMachineId is not available. Electron context might not be initialized.');
+      }
+
+      const machineId = await window.electron.getMachineId();
+      if (!machineId) {
+        throw new Error('Failed to get machine ID');
+      }
       
-      // Check if computer exists in database
-      const { data: existingComputer, error: fetchError } = await supabase
+      // Check if computer exists
+      const { data: existingComputer, error } = await supabase
         .from('computers')
         .select('*')
-        .eq('mac_address', computerInfo.macAddress)
-        .single()
+        .eq('machine_id', machineId)
+        .limit(1)
+        .single();
 
-      if (fetchError) {
-        // Only create new computer if it doesn't exist
-        if (fetchError.code === 'PGRST116') { // PGRST116 is "no rows returned"
-          // First check if computer number exists
-          let computerNumber = `PC-${computerInfo.hostname}`
-          const { data: existingNumber } = await supabase
-            .from('computers')
-            .select('computer_number')
-            .eq('computer_number', computerNumber)
-            .single()
-
-          if (existingNumber) {
-            // If computer number exists, append a random number
-            const randomSuffix = Math.floor(Math.random() * 1000)
-            computerNumber = `PC-${computerInfo.hostname}-${randomSuffix}`
-          }
-
-          const { data: newComputer, error: createError } = await supabase
-            .from('computers')
-            .insert({
-              computer_number: computerNumber,
-              name: computerInfo.hostname,
-              status: 'available',
-              ip_address: computerInfo.ipAddress,
-              mac_address: computerInfo.macAddress,
-              specifications: {
-                hostname: computerInfo.hostname,
-                platform: computerInfo.platform,
-                arch: computerInfo.arch
-              }
-            })
-            .select()
-            .single()
-
-          if (createError) throw createError
-          set({ currentComputer: newComputer as Computer })
-        } else {
-          throw fetchError
-        }
-      } else {
-        // Update IP address if it has changed
-        if (existingComputer.ip_address !== computerInfo.ipAddress) {
-          const { data: updatedComputer, error: updateError } = await supabase
-            .from('computers')
-            .update({ ip_address: computerInfo.ipAddress })
-            .eq('id', existingComputer.id)
-            .select()
-            .single()
-
-          if (updateError) throw updateError
-          set({ currentComputer: updatedComputer as Computer })
-        } else {
-          set({ currentComputer: existingComputer as Computer })
-        }
+      if (existingComputer) {
+        set({ currentComputer: existingComputer });
+        return;
       }
+
+      // Get all computer numbers to find an available one
+      const { data: computers } = await supabase
+        .from('computers')
+        .select('computer_number')
+        .order('computer_number');
+
+      // Find the first available number
+      let nextNumber = 1;
+      const usedNumbers = new Set(
+        computers?.map(c => parseInt(c.computer_number.replace(/\D/g, ''))) || []
+      );
+
+      while (usedNumbers.has(nextNumber)) {
+        nextNumber++;
+      }
+
+      // Create new computer with the first available number
+      const computerNumber = `PC${nextNumber.toString().padStart(3, '0')}`;
+      
+      const { data: newComputer, error: insertError } = await supabase
+        .from('computers')
+        .insert({
+          machine_id: machineId,
+          computer_number: computerNumber,
+          name: `PC-${machineId.slice(0, 6)}`,
+          status: 'available',
+          specifications: JSON.stringify(await window.electron.getSystemInfo())
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+      set({ currentComputer: newComputer });
+
     } catch (error) {
-      console.error('Error initializing computer:', error)
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
-      set({ error: errorMessage })
-    } finally {
-      set({ loading: false })
+      console.error('Computer registration error:', error);
+      throw error;
+    }
+  },
+
+  updateComputer: async (updateData) => {
+    try {
+      if (!window.electron?.getMachineId) {
+        throw new Error('getMachineId is not available');
+      }
+
+      const machineId = await window.electron.getMachineId();
+      if (!machineId) {
+        throw new Error('Failed to get machine ID');
+      }
+      
+      const { data, error } = await supabase
+        .from('computers')
+        .update(updateData)
+        .eq('machine_id', machineId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      set({ currentComputer: data });
+    } catch (error) {
+      console.error('Computer update error:', error);
+      throw error;
     }
   }
-}))
+}));

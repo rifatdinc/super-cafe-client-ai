@@ -4,12 +4,12 @@ import * as fs from 'fs';
 import { createClient } from '@supabase/supabase-js';
 import { machineIdSync } from 'node-machine-id';
 import os from 'os';
+import * as si from 'systeminformation';
 
 const supabaseUrl = 'http://127.0.0.1:54321'
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0'
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
-
 
 let mainWindow: BrowserWindow | null = null;
 let currentComputerId: string | null = null;
@@ -17,6 +17,21 @@ let currentComputerId: string | null = null;
 // Set environment variables
 const isDev = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === undefined;
 const isMac = process.platform === 'darwin';
+
+// IPC Handlers
+ipcMain.handle('get-machine-id', () => {
+  return machineIdSync();
+});
+
+ipcMain.handle('get-system-info', async () => {
+  return {
+    os: await si.osInfo(),
+    cpu: await si.cpu(),
+    mem: await si.mem(),
+    disk: await si.diskLayout(),
+    graphics: await si.graphics()
+  };
+});
 
 async function tryConnectDevServer(retries = 3, delay = 1000): Promise<boolean> {
   for (let i = 0; i < retries; i++) {
