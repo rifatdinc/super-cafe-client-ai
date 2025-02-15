@@ -10,7 +10,7 @@ interface Session {
   duration: number | null
   hourlyRate: number
   totalCost: number | null
-  status: 'active' | 'ended'
+  status: 'active' | 'completed' | 'cancelled'
 }
 
 interface SessionStore {
@@ -20,12 +20,19 @@ interface SessionStore {
   startSession: (computerId: string, customerId: string) => Promise<void>
   endSession: () => Promise<void>
   fetchCurrentSession: (customerId: string) => Promise<void>
+  calculateCurrentCost: (elapsedTime: number) => number
+  MINIMUM_FEE: number
+  HOURLY_RATE: number
+  BILLING_INTERVAL: number
 }
 
 export const useSessionStore = create<SessionStore>((set, get) => ({
   currentSession: null,
   loading: false,
   error: null,
+  MINIMUM_FEE: 30,
+  HOURLY_RATE: 60,
+  BILLING_INTERVAL: 30,
 
   startSession: async (computerId: string, customerId: string) => {
     set({ loading: true, error: null })
@@ -68,7 +75,8 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
           computer_id: computerId,
           customer_id: customerId,
           hourly_rate: rateSettings.value.amount,
-          status: 'active'
+          status: 'active',
+          total_cost: get().MINIMUM_FEE
         })
         .select()
         .single()
@@ -92,7 +100,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
 
       const endTime = new Date().toISOString()
       const duration = Math.ceil((new Date(endTime).getTime() - new Date(currentSession.startTime).getTime()) / (1000 * 60))
-      const totalCost = (duration / 60) * currentSession.hourlyRate
+      const totalCost = get().calculateCurrentCost(duration)
 
       const { error } = await supabase
         .from('sessions')
@@ -100,7 +108,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
           end_time: endTime,
           duration,
           total_cost: totalCost,
-          status: 'ended'
+          status: 'completed'
         })
         .eq('id', currentSession.id)
 
@@ -138,5 +146,23 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
     } finally {
       set({ loading: false })
     }
+  },
+
+  calculateCurrentCost: (elapsedMinutes: number) => {
+    const { MINIMUM_FEE, HOURLY_RATE, BILLING_INTERVAL } = get()
+    
+    // Minimum ücret kontrolü
+    if (elapsedMinutes <= BILLING_INTERVAL) {
+      return MINIMUM_FEE
+    }
+    
+    // 30 dakikalık dilimlere göre ücretlendirme
+    const intervals = Math.ceil(elapsedMinutes / BILLING_INTERVAL)
+    const cost = Math.max(
+      MINIMUM_FEE,
+      (intervals * (HOURLY_RATE / 2)) // Her 30 dakika için saatlik ücretin yarısı
+    )
+    
+    return Number(cost.toFixed(2))
   }
 }))

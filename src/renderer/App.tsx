@@ -1,4 +1,4 @@
-import { createHashRouter, RouterProvider, Navigate, Outlet, Route, Routes } from "react-router-dom"
+import { createHashRouter, RouterProvider, Navigate, Outlet } from "react-router-dom"
 import { Toaster } from "sonner"
 import { Suspense } from "react"
 import { NotFoundPage } from "./pages/not-found"
@@ -6,18 +6,14 @@ import { LoadingSpinner } from "./components/ui/loading"
 import { LoginPage } from "./pages/login"
 import { SignUpPage } from "./pages/signup"
 import { DashboardPage } from "./pages/dashboard"
-import { SessionPage } from "./pages/session"
-import { BalancePage } from "./pages/session/balance"
 import { SessionHistoryPage } from "./pages/session/history"
-import { CustomerProtectedRoute } from "./components/CustomerProtectedRoute"
-import { useCustomerAuthStore } from "./lib/stores/customer-auth-store"
 import { useEffect, useState } from 'react';
 import { useComputerStore } from './lib/stores/computer-store';
 import { AddBalancePage } from './pages/add-balance';
+import { ProfilePage } from './pages/profile';
 import { TopBar } from '@/renderer/components/TopBar'
 import { Sidebar } from '@/renderer/components/Sidebar'
 
-// Using HashRouter for Electron compatibility
 const routes = createHashRouter([
   {
     path: "/",
@@ -43,7 +39,6 @@ const routes = createHashRouter([
       {
         path: "app",
         element: (
-          <CustomerProtectedRoute>
             <Suspense fallback={<LoadingSpinner />}>
               <div className="min-h-screen bg-background">
                 <Sidebar />
@@ -53,7 +48,6 @@ const routes = createHashRouter([
                 </main>
               </div>
             </Suspense>
-          </CustomerProtectedRoute>
         ),
         children: [
           {
@@ -65,22 +59,18 @@ const routes = createHashRouter([
             element: <DashboardPage />
           },
           {
-            path: "session",
-            element: <SessionPage />
-          },
-          {
-            path: "session/balance",
-            element: <BalancePage />
-          },
-          {
             path: "session/history",
             element: <SessionHistoryPage />
+          },
+          {
+            path: "profile",
+            element: <ProfilePage />
           }
         ]
       },
       {
         path: "add-balance",
-        element: <CustomerProtectedRoute><AddBalancePage /></CustomerProtectedRoute>
+        element: <AddBalancePage />
       },
       {
         path: "*",
@@ -95,12 +85,10 @@ function App() {
   const [isElectronReady, setIsElectronReady] = useState(false);
 
   useEffect(() => {
-    // Electron kontekstinin yüklendiğini kontrol et
     const checkElectron = async () => {
       if (await window.electron?.getMachineId()) {
         setIsElectronReady(true);
       } else {
-        // Eğer henüz yüklenmediyse, kısa bir süre sonra tekrar dene
         setTimeout(checkElectron, 100);
       }
     };
@@ -109,7 +97,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // Electron hazır olduğunda initializeComputer'ı çağır
     if (isElectronReady) {
       initializeComputer().catch(error => {
         console.error('Failed to initialize computer:', error);

@@ -11,7 +11,16 @@ export function SessionPage() {
   const [elapsedTime, setElapsedTime] = useState(0)
   const navigate = useNavigate()
   const { toast } = useToast()
-  const { currentSession, startSession, endSession, fetchCurrentSession, loading } = useSessionStore()
+  const { 
+    currentSession, 
+    startSession, 
+    endSession, 
+    fetchCurrentSession, 
+    loading,
+    calculateCurrentCost,
+    MINIMUM_FEE,
+    HOURLY_RATE
+  } = useSessionStore()
   const { balance, fetchBalance } = useBalanceStore()
   const { customer } = useCustomerAuthStore()
 
@@ -41,35 +50,34 @@ export function SessionPage() {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
   }
 
-  const calculateCurrentCost = () => {
-    if (!currentSession) return 0
-    const hours = elapsedTime / 3600
-    return (hours * currentSession.hourlyRate).toFixed(2)
+  const getCurrentCost = () => {
+    const minutesElapsed = Math.ceil(elapsedTime / 60)
+    return calculateCurrentCost(minutesElapsed)
   }
 
   const handleStartSession = async () => {
     try {
-      // For now, we're using a hardcoded computer ID. In reality, this should come from the selected computer
-      await startSession('COMPUTER-1', customer.id)
-      toast({
-        title: 'Session Started',
-        description: 'Your session has been started successfully',
-      })
-    } catch (error) {
-      if (error.message.includes('Insufficient balance')) {
+      if (balance < MINIMUM_FEE) {
         toast({
           variant: 'destructive',
-          title: 'Insufficient Balance',
-          description: 'Please add more balance to start a session',
+          title: 'Yetersiz Bakiye',
+          description: `Minimum açılış ücreti ${MINIMUM_FEE} TL'dir. Lütfen bakiye yükleyin.`,
         })
         navigate('/app/session/balance')
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: error.message,
-        })
+        return
       }
+
+      await startSession('COMPUTER-1', customer.id)
+      toast({
+        title: 'Oturum Başlatıldı',
+        description: `Minimum açılış ücreti: ${MINIMUM_FEE} TL, Saatlik ücret: ${HOURLY_RATE} TL`,
+      })
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Hata',
+        description: error.message,
+      })
     }
   }
 
@@ -93,19 +101,26 @@ export function SessionPage() {
     <div className="container mx-auto max-w-2xl py-10">
       <Card>
         <CardHeader>
-          <CardTitle>Session Management</CardTitle>
-          <CardDescription>Current Balance: ₺{balance.toFixed(2)}</CardDescription>
+          <CardTitle>Oturum Yönetimi</CardTitle>
+          <CardDescription>
+            Mevcut Bakiye: ₺{balance.toFixed(2)}
+            {!currentSession && (
+              <div className="mt-2 text-sm text-muted-foreground">
+                Minimum açılış ücreti: ₺{MINIMUM_FEE} • Saatlik ücret: ₺{HOURLY_RATE}
+              </div>
+            )}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {currentSession ? (
             <div className="space-y-4">
               <div className="text-center">
                 <h3 className="text-2xl font-bold">{formatTime(elapsedTime)}</h3>
-                <p className="text-sm text-muted-foreground">Elapsed Time</p>
+                <p className="text-sm text-muted-foreground">Geçen Süre</p>
               </div>
               <div className="text-center">
-                <h3 className="text-2xl font-bold">₺{calculateCurrentCost()}</h3>
-                <p className="text-sm text-muted-foreground">Current Cost</p>
+                <h3 className="text-2xl font-bold">₺{getCurrentCost()}</h3>
+                <p className="text-sm text-muted-foreground">Mevcut Ücret</p>
               </div>
               <Button 
                 className="w-full" 
@@ -113,7 +128,7 @@ export function SessionPage() {
                 onClick={handleEndSession}
                 disabled={loading}
               >
-                End Session
+                Oturumu Sonlandır
               </Button>
             </div>
           ) : (
@@ -121,16 +136,16 @@ export function SessionPage() {
               <Button 
                 className="w-full" 
                 onClick={handleStartSession}
-                disabled={loading}
+                disabled={loading || balance < MINIMUM_FEE}
               >
-                Start New Session
+                Yeni Oturum Başlat
               </Button>
               <Button 
                 className="w-full" 
                 variant="outline"
                 onClick={() => navigate('/app/session/balance')}
               >
-                Add Balance
+                Bakiye Yükle
               </Button>
             </div>
           )}

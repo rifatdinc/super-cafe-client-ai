@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { Home, User, Clock, CreditCard, Settings, LogOut } from 'lucide-react'
+import { Home, History, Wallet, LogOut } from 'lucide-react'
 import { useCustomerAuthStore } from '@/renderer/lib/stores/customer-auth-store'
 
 export function Sidebar() {
@@ -8,10 +8,8 @@ export function Sidebar() {
 
   const navItems = [
     { icon: Home, path: '/app/dashboard', label: 'Dashboard' },
-    { icon: User, path: '/app/profile', label: 'Profile' },
-    { icon: Clock, path: '/app/sessions', label: 'Sessions' },
-    { icon: CreditCard, path: '/app/balance', label: 'Balance' },
-    { icon: Settings, path: '/app/settings', label: 'Settings' },
+    { icon: History, path: '/app/history', label: 'History' },
+    { icon: Wallet, path: '/app/add-balance', label: 'Add Balance' },
   ]
 
   return (
