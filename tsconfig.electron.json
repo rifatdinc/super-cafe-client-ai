@@ -9,10 +9,10 @@
     "noImplicitAny": true,
     "sourceMap": true,
     "baseUrl": ".",
-    "outDir": "dist",
+    "outDir": "dist/main",
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "rootDir": "src",
+    "rootDir": "src/main",
     "paths": {
       "*": ["node_modules/*"]
     }

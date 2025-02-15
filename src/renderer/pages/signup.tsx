@@ -16,11 +16,11 @@ interface SignupForm {
 
 export function SignUpPage() {
   const [formData, setFormData] = useState<SignupForm>({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    full_name: '',
-    phone: '',
+    email: 'mr.dinc41@gmail.com',
+    password: 'rafi41',
+    confirmPassword: 'rafi41',
+    full_name: 'Rifat dinc',
+    phone: '5362561240',
   })
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
@@ -57,8 +57,6 @@ export function SignUpPage() {
 
     try {
       setLoading(true)
-
-      // Kullanıcı kaydı oluştur
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -70,25 +68,32 @@ export function SignUpPage() {
         }
       })
 
-      if (signUpError) {
-        throw signUpError
-      }
+      if (signUpError) throw signUpError
 
-      if (!authData.user) {
-        throw new Error('User could not be created')
-      }
+      // Create customer record with id from auth
+      const { error: customerError } = await supabase
+        .from('customers')
+        .insert({
+          id: authData.user?.id,
+          full_name: formData.full_name,
+          email: formData.email,
+          phone: formData.phone,
+          balance: 0
+        })
+
+      if (customerError) throw customerError
 
       toast({
         title: 'Success!',
-        description: 'Account created. Please check your email for verification and then log in.',
+        description: 'Account created successfully. You can now login.',
       })
-      
+
       navigate('/login')
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message || 'An error occurred during signup',
+        description: error.message,
       })
     } finally {
       setLoading(false)

@@ -1,6 +1,6 @@
 # Progress Status
 
-## Completed Features ✅
+## Completed Features 
 
 ### Authentication System (2025-02-07)
 - [x] Supabase client setup and configuration
@@ -22,7 +22,22 @@
 - [x] Route protection and redirection
 - [x] Form validation and error handling
 
-## In Progress 🚧
+### Computer Registration System (2025-02-09)
+- [x] Computer registration system is now functional
+- [x] Electron context is correctly initialized before accessing Electron APIs
+- [x] Unique computer numbers are generated and assigned to new computers
+- [x] Error handling is implemented in the computer store
+- [x] Basic IPC communication is set up
+
+### Bakiye Yönetimi (2025-02-14)
+- [x] Bakiye yükleme sayfası
+- [x] Bakiye yükleme işlemleri
+- [x] Bakiye yükleme bildirimleri
+- [x] Bakiye yükleme işlemlerini Supabase'e kaydetme
+- [x] Bakiye yükleme işlemleri için RLS politikaları
+- [x] Bakiye yükleme işlemleri için error handling
+
+## In Progress 
 
 ### Windows Integration
 - [ ] Windows-specific window controls
@@ -36,7 +51,7 @@
 - [ ] Session timeout handling
 - [ ] Graceful error recovery
 
-## Planned Features 📋
+## Planned Features 
 
 ### Windows-Specific Features
 - [ ] Custom window frame
@@ -58,7 +73,7 @@
 - [ ] Resource optimization
 - [ ] Startup time improvement
 
-## Known Issues 🐛
+## Known Issues 
 - None reported yet (initial implementation phase)
 
 ## Next Sprint Goals

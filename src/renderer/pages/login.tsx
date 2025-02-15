@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useToast } from '@/renderer/components/ui/use-toast'
+import { useNavigate, Link } from 'react-router-dom'
+import { toast } from 'sonner'
 import { Input } from '@/renderer/components/ui/input'
 import { Button } from '@/renderer/components/ui/button'
 import { Label } from '@/renderer/components/ui/label'
 import { useCustomerAuthStore } from '@/renderer/lib/stores/customer-auth-store'
+import { Wallet } from 'lucide-react'
 
 interface LoginForm {
   email: string
@@ -13,12 +14,11 @@ interface LoginForm {
 
 export function LoginPage() {
   const [formData, setFormData] = useState<LoginForm>({
-    email: '',
-    password: '',
+    email: 'mr.dinc41@gmail.com',
+    password: 'rafi41',
   })
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
-  const { toast } = useToast()
   const { signIn } = useCustomerAuthStore()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -33,38 +33,44 @@ export function LoginPage() {
     e.preventDefault()
     
     if (!formData.email || !formData.password) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Please fill in all fields',
-      })
+      toast.error('Lütfen tüm alanları doldurun')
       return
     }
 
     try {
       setLoading(true)
-      await signIn(formData.email, formData.password)
-      toast({
-        title: 'Welcome back!',
-        description: 'Successfully logged in',
+      const result = await signIn(formData.email, formData.password)
+      
+      if (!result?.success) {
+        const isBalanceError = result?.type === 'balance'
+        if (isBalanceError) {
+          toast.error(
+            <div className="flex items-center gap-3">
+              <Wallet className="h-6 w-6 text-yellow-500" />
+              <div>
+                <p className="font-medium">Bakiyeniz Tükendi! 😅</p>
+                <p className="mt-1 text-sm opacity-90">
+                  <Link to="/add-balance" className="text-blue-500 hover:underline">
+                    Buraya tıklayarak
+                  </Link>
+                  {' '}bakiye yükleyebilir ve oyunun keyfini çıkarabilirsiniz! 🎮
+                </p>
+              </div>
+            </div>,
+            {
+              duration: 6000
+            }
+          )
+        } else {
+          toast.error(result?.error || 'Giriş yapılırken bir hata oluştu')
+        }
+        return
+      }
+
+      toast.success('Hoş geldiniz! Keyifli oyunlar 🎮', {
+        description: 'Başarıyla giriş yapıldı'
       })
       navigate('/app/dashboard')
-    } catch (error) {
-      let errorMessage = 'An error occurred while signing in.'
-      if (error instanceof Error) {
-        if (error.message.includes('No customer account found')) {
-          errorMessage = 'No customer account found. Please contact staff to create your account.'
-        } else if (error.message.includes('Invalid login credentials')) {
-          errorMessage = 'Invalid email or password.'
-        } else {
-          errorMessage = error.message
-        }
-      }
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: errorMessage,
-      })
     } finally {
       setLoading(false)
     }
