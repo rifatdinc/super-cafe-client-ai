@@ -113,6 +113,14 @@ TO authenticated
 USING (auth.uid() = id);
 ```
 
+## Bakiye Yönetimi
+- **Bakiye Yükleme:**
+  - Bakiye yükleme işlemleri için özel bir sayfa
+  - Supabase stored procedure ile bakiye yükleme
+  - Sonner ile kullanıcı bildirimleri
+  - RLS politikaları ile güvenli bakiye yönetimi
+  - Zustand ile state yönetimi
+
 ## Build Configuration
 
 ### Windows Build

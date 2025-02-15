@@ -155,8 +155,7 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set) => ({
         .eq('customer_id', useCustomerAuthStore.getState().user?.id)
         .eq('status', 'active')
 
-      // End all active sessions
-      if (activeSessions?.length > 0) {
+      if (activeSessions && activeSessions.length > 0) {
         for (const session of activeSessions) {
           // Update session
           await supabase

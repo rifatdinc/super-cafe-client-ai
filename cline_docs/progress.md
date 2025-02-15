@@ -29,6 +29,14 @@
 - [x] Error handling is implemented in the computer store
 - [x] Basic IPC communication is set up
 
+### Bakiye Yönetimi (2025-02-14)
+- [x] Bakiye yükleme sayfası
+- [x] Bakiye yükleme işlemleri
+- [x] Bakiye yükleme bildirimleri
+- [x] Bakiye yükleme işlemlerini Supabase'e kaydetme
+- [x] Bakiye yükleme işlemleri için RLS politikaları
+- [x] Bakiye yükleme işlemleri için error handling
+
 ## In Progress 
 
 ### Windows Integration

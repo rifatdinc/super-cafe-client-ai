@@ -1,4 +1,4 @@
-import { createHashRouter, RouterProvider, Navigate, Outlet } from "react-router-dom"
+import { createHashRouter, RouterProvider, Navigate, Outlet, Route, Routes } from "react-router-dom"
 import { Toaster } from "sonner"
 import { Suspense } from "react"
 import { NotFoundPage } from "./pages/not-found"
@@ -14,6 +14,8 @@ import { useCustomerAuthStore } from "./lib/stores/customer-auth-store"
 import { useEffect, useState } from 'react';
 import { useComputerStore } from './lib/stores/computer-store';
 import { AddBalancePage } from './pages/add-balance';
+import { TopBar } from '@/renderer/components/TopBar'
+import { Sidebar } from '@/renderer/components/Sidebar'
 
 // Using HashRouter for Electron compatibility
 const routes = createHashRouter([
@@ -44,7 +46,9 @@ const routes = createHashRouter([
           <CustomerProtectedRoute>
             <Suspense fallback={<LoadingSpinner />}>
               <div className="min-h-screen bg-background">
-                <main className="flex-1">
+                <Sidebar />
+                <TopBar />
+                <main className="pl-16 pt-16 p-4">
                   <Outlet />
                 </main>
               </div>
