@@ -242,11 +242,9 @@ async function createWindow() {
       minWidth: 1024,
       minHeight: 768,
       webPreferences: {
-        nodeIntegration: false,
+        nodeIntegration: true,
         contextIsolation: true,
-        sandbox: true,
-        webSecurity: true,
-        preload: path.join(__dirname, 'preload.js') // Yolu düzelttik
+        preload: path.join(__dirname, 'preload.js')
       },
       titleBarStyle: isMac ? 'hidden' : 'default',
       autoHideMenuBar: true,
@@ -255,7 +253,6 @@ async function createWindow() {
 
     console.log('Current NODE_ENV:', process.env.NODE_ENV);
     console.log('isDev:', isDev);
-
 
     // Load the app
     if (isDev) {
@@ -324,8 +321,8 @@ async function loadProductionBuild() {
   throw new Error('Could not find production build. Make sure to run the build command first.');
 }
 
-// App lifecycle
-app.whenReady().then(createWindow);
+// SystemMonitor instance'ını oluştur
+const systemMonitor = new SystemMonitor();
 
 app.on('window-all-closed', async () => {
   await setComputerOffline();
@@ -362,3 +359,54 @@ ipcMain.on('maximize-window', () => {
 ipcMain.on('close-window', () => {
   mainWindow?.close();
 });
+
+// IP adresi almak için IPC handler
+ipcMain.handle('get-ip-address', async () => {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name] || []) {
+      // IPv4 ve local olmayan adresi bul
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  throw new Error('No IP address found');
+});
+
+// WebRTC bağlantısı için IPC handler
+ipcMain.handle('connect-to-stream', async (event, { computerId, ipAddress, port }) => {
+  try {
+    // WebRTC bağlantısını kur
+    // TODO: WebRTC bağlantı kodunu ekle
+    return {
+      stream: null // WebRTC stream'i döndür
+    };
+  } catch (error) {
+    console.error('Failed to connect to stream:', error);
+    throw error;
+  }
+});
+
+// Streaming işlemleri için IPC handlers
+ipcMain.handle('start-streaming', async (_event, id: string) => {
+  try {
+    // TODO: Implement VNC or RDP connection
+    console.log('Starting stream for computer:', id)
+    return { success: true }
+  } catch (error) {
+    console.error('Error starting stream:', error)
+    return { success: false, error }
+  }
+})
+
+ipcMain.handle('stop-streaming', async (_event, id: string) => {
+  try {
+    // TODO: Implement VNC or RDP disconnection
+    console.log('Stopping stream for computer:', id)
+    return { success: true }
+  } catch (error) {
+    console.error('Error stopping stream:', error)
+    return { success: false, error }
+  }
+})

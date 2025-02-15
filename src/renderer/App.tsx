@@ -1,6 +1,6 @@
 import { createHashRouter, RouterProvider, Navigate, Outlet, Route, Routes } from "react-router-dom"
 import { Toaster } from "sonner"
-import { Suspense } from "react"
+import { Suspense, useEffect } from "react"
 import { NotFoundPage } from "./pages/not-found"
 import { LoadingSpinner } from "./components/ui/loading"
 import { LoginPage } from "./pages/login"
@@ -17,6 +17,7 @@ import { AddBalancePage } from './pages/add-balance';
 import { TopBar } from '@/renderer/components/TopBar'
 import { Sidebar } from '@/renderer/components/Sidebar'
 
+
 // Using HashRouter for Electron compatibility
 const routes = createHashRouter([
   {
@@ -26,6 +27,7 @@ const routes = createHashRouter([
         <Outlet />
         <Toaster position="bottom-right" />
       </>
+
     ),
     children: [
       {
@@ -89,6 +91,42 @@ const routes = createHashRouter([
     ]
   }
 ])
+
+function AppLayout() {
+  const session = useCustomerAuthStore((state) => state.session)
+
+  useEffect(() => {
+    // Kullanıcı oturum açtığında metrikleri başlat
+    if (session?.user) {
+      const computerId = session.user.id // veya başka bir şekilde computer ID'sini al
+      metricsService.initialize(computerId)
+    }
+
+    // Cleanup
+    return () => {
+      metricsService.dispose()
+    }
+  }, [session])
+
+  // Uygulama kapatılmadan önce offline durumuna geç
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      metricsService.updateStatus('offline')
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [])
+
+  return (
+    <>
+      <Outlet />
+      <Toaster position="top-right" />
+    </>
+  )
+}
 
 function App() {
   const { initializeComputer } = useComputerStore();

@@ -25,4 +25,5 @@ contextBridge.exposeInMainWorld('electron', {
   getSystemInfo: () => {
     return ipcRenderer.invoke('get-system-info')
   }
+
 })

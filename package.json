@@ -57,6 +57,7 @@
     "@radix-ui/react-separator": "^1.1.1",
     "@supabase/supabase-js": "^2.48.1",
     "@tanstack/react-table": "^8.20.6",
+    "@types/simple-peer": "^9.11.8",
     "electron": "latest",
     "node-machine-id": "^1.1.12",
     "react": "^18.2.0",
