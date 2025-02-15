@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { Home, History, Wallet, LogOut } from 'lucide-react'
+import { Home, History, UserCircle, LogOut } from 'lucide-react'
 import { useCustomerAuthStore } from '@/renderer/lib/stores/customer-auth-store'
 
 export function Sidebar() {
@@ -8,8 +8,8 @@ export function Sidebar() {
 
   const navItems = [
     { icon: Home, path: '/app/dashboard', label: 'Dashboard' },
-    { icon: History, path: '/app/history', label: 'History' },
-    { icon: Wallet, path: '/app/add-balance', label: 'Add Balance' },
+    { icon: History, path: '/app/session/history', label: 'History' },
+    { icon: UserCircle, path: '/app/profile', label: 'Add Balance' },
   ]
 
   return (

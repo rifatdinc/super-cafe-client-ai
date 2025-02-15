@@ -40,13 +40,7 @@ export function TopBar({ title }: TopBarProps) {
           </button>
 
           <ThemeToggle />
-              <button
-                onClick={() => navigate('/app/profile')}
-                className="p-2 hover:bg-accent rounded-full"
-                title="Profil"
-              >
-                <UserCircle2 className="h-5 w-5" />
-              </button>
+           
           <div className="flex items-center gap-2">
             <div className="text-sm text-right">
               <p className="font-medium">{customer?.full_name}</p>
