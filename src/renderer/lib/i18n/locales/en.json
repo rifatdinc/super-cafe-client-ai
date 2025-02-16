@@ -1,0 +1,19 @@
+{
+  "orders": {
+    "title": "Menu & Orders",
+    "cart": "Cart",
+    "total": "Total",
+    "placeOrder": "Place Order",
+    "emptyCart": "Your cart is empty",
+    "addToCart": "Add to Cart",
+    "history": "Order History",
+    "notes": "Notes",
+    "noOrders": "No orders found",
+    "orderPlaced": "Order Placed",
+    "orderSuccess": "Your order has been placed successfully",
+    "allCategories": "All Categories",
+    "lowStock": "Only {{count}} left!",
+    "outOfStock": "Out of Stock"
+  },
+  "error": "Error"
+}

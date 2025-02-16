@@ -1,15 +1,19 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { Home, History, UserCircle, LogOut } from 'lucide-react'
+import { Home, History, UserCircle, LogOut, ShoppingBag, ClipboardList } from 'lucide-react'
 import { useCustomerAuthStore } from '@/renderer/lib/stores/customer-auth-store'
+import { useTranslation } from 'react-i18next'
 
 export function Sidebar() {
   const navigate = useNavigate()
   const { signOut } = useCustomerAuthStore()
-
+  const { t } = useTranslation()
+  
   const navItems = [
-    { icon: Home, path: '/app/dashboard', label: 'Dashboard' },
-    { icon: History, path: '/app/session/history', label: 'History' },
-    { icon: UserCircle, path: '/app/profile', label: 'Add Balance' },
+    { icon: Home, path: '/app/dashboard', label: t('navigation.dashboard') },
+    { icon: ShoppingBag, path: '/app/orders', label: t('navigation.orders') },
+    { icon: ClipboardList, path: '/app/order-history', label: t('navigation.orderHistory') },
+    { icon: History, path: '/app/session/history', label: t('navigation.history') },
+    { icon: UserCircle, path: '/app/profile', label: t('navigation.profile') },
   ]
 
   return (
@@ -18,7 +22,6 @@ export function Sidebar() {
         <div className="h-16 flex items-center justify-center border-b">
           <span className="font-semibold">🔥</span>
         </div>
-
         <div className="flex flex-col items-center py-4 flex-1">
           {navItems.map((item) => (
             <NavLink
@@ -29,17 +32,18 @@ export function Sidebar() {
                   isActive ? 'bg-accent' : ''
                 }`
               }
+              title={item.label}
             >
               <item.icon className="h-5 w-5" />
             </NavLink>
           ))}
-
           <button
             onClick={async () => {
               await signOut()
               navigate('/login')
             }}
             className="p-3 mt-auto hover:bg-accent rounded-lg flex items-center"
+            title={t('navigation.signOut')}
           >
             <LogOut className="h-5 w-5" />
           </button>

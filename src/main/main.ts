@@ -241,6 +241,7 @@ async function createWindow() {
       height: 720,
       minWidth: 1024,
       minHeight: 768,
+      icon: path.join(__dirname, '../../public/logo.png'),
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
@@ -251,11 +252,9 @@ async function createWindow() {
       titleBarStyle: isMac ? 'hidden' : 'default',
       autoHideMenuBar: true,
       backgroundColor: '#020817',
+      movable: true,
+      center: true,
     });
-
-    console.log('Current NODE_ENV:', process.env.NODE_ENV);
-    console.log('isDev:', isDev);
-
 
     // Load the app
     if (isDev) {

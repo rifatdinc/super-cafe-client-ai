@@ -1,0 +1,19 @@
+{
+  "orders": {
+    "title": "Menü & Siparişler",
+    "cart": "Sepet",
+    "total": "Toplam",
+    "placeOrder": "Sipariş Ver",
+    "emptyCart": "Sepetiniz boş",
+    "addToCart": "Sepete Ekle",
+    "history": "Sipariş Geçmişi",
+    "notes": "Notlar",
+    "noOrders": "Sipariş bulunamadı",
+    "orderPlaced": "Sipariş Verildi",
+    "orderSuccess": "Siparişiniz başarıyla oluşturuldu",
+    "allCategories": "Tüm Kategoriler",
+    "lowStock": "Son {{count}} adet!",
+    "outOfStock": "Stokta Yok"
+  },
+  "error": "Hata"
+}

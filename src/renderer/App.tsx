@@ -13,6 +13,8 @@ import { AddBalancePage } from './pages/add-balance';
 import { ProfilePage } from './pages/profile';
 import { TopBar } from '@/renderer/components/TopBar'
 import { Sidebar } from '@/renderer/components/Sidebar'
+import { OrderPage } from './pages/orders'
+import { OrderHistoryPage } from './pages/order-history'
 
 const routes = createHashRouter([
   {
@@ -65,6 +67,14 @@ const routes = createHashRouter([
           {
             path: "profile",
             element: <ProfilePage />
+          },
+          {
+            path: "orders",
+            element: <OrderPage />
+          },
+          {
+            path: "order-history",
+            element: <OrderHistoryPage />
           }
         ]
       },

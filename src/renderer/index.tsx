@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import './styles/globals.css'
+import './lib/i18n' // i18n başlatma
 
 // Create root inside try-catch to handle any initialization errors
 try {

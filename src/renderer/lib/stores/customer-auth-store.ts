@@ -17,10 +17,11 @@ interface CustomerAuthState {
   signIn: (email: string, password: string) => Promise<{ success: boolean, error?: string, type?: string } | null>
   signOut: () => Promise<void>
   initialize: () => Promise<void>
-  updateCustomer: (customerData: { id: string; full_name: string; email: string; phone: string }) => Promise<void>;
+  updateCustomer: (customerData: { id: string; full_name: string; email: string; phone: string }) => Promise<void>
+  refreshCustomerData: () => Promise<void>
 }
 
-export const useCustomerAuthStore = create<CustomerAuthState>((set) => ({
+export const useCustomerAuthStore = create<CustomerAuthState>((set, get) => ({
   user: null,
   session: null,
   customer: null,
@@ -28,36 +29,40 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set) => ({
   initialize: async () => {
     const { data: { session } } = await supabase.auth.getSession()
     set({ session, user: session?.user ?? null })
-
+    
     if (session?.user) {
-      const { data: customer, error } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('id', session.user.id)
-        .maybeSingle()
-
-      if (!error && customer) {
-        set({ customer })
-      }
+      await get().refreshCustomerData()
     }
 
     supabase.auth.onAuthStateChange(async (_event, session) => {
       set({ session, user: session?.user ?? null })
       
       if (session?.user) {
-        const { data: customer, error } = await supabase
-          .from('customers')
-          .select('*')
-          .eq('id', session.user.id)
-          .maybeSingle()
-
-        if (!error && customer) {
-          set({ customer })
-        }
+        await get().refreshCustomerData()
       } else {
         set({ customer: null })
       }
     })
+  },
+
+  refreshCustomerData: async () => {
+    const session = get().session
+    if (!session?.user) return
+
+    try {
+      const { data: customer, error } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('id', session.user.id)
+        .maybeSingle()
+
+      if (error) throw error
+      if (customer) {
+        set({ customer })
+      }
+    } catch (error) {
+      console.error('Error refreshing customer data:', error)
+    }
   },
 
   signIn: async (email: string, password: string) => {
