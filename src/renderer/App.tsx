@@ -9,12 +9,14 @@ import { DashboardPage } from "./pages/dashboard"
 import { SessionHistoryPage } from "./pages/session/history"
 import { useEffect, useState } from 'react';
 import { useComputerStore } from './lib/stores/computer-store';
+import { useCustomerAuthStore } from './lib/stores/customer-auth-store';
 import { AddBalancePage } from './pages/add-balance';
 import { ProfilePage } from './pages/profile';
 import { TopBar } from '@/renderer/components/TopBar'
 import { Sidebar } from '@/renderer/components/Sidebar'
 import { OrderPage } from './pages/orders'
 import { OrderHistoryPage } from './pages/order-history'
+import { supabase } from './lib/supabase'
 
 const routes = createHashRouter([
   {
@@ -28,7 +30,7 @@ const routes = createHashRouter([
     children: [
       {
         path: "",
-        element: <Navigate to="/app/dashboard" replace />
+        element: <Root />
       },
       {
         path: "login",
@@ -41,15 +43,15 @@ const routes = createHashRouter([
       {
         path: "app",
         element: (
-            <Suspense fallback={<LoadingSpinner />}>
-              <div className="min-h-screen bg-background">
-                <Sidebar />
-                <TopBar />
-                <main className="pl-16 pt-16 p-4">
-                  <Outlet />
-                </main>
-              </div>
-            </Suspense>
+          <Suspense fallback={<LoadingSpinner />}>
+            <div className="min-h-screen bg-background">
+              <Sidebar />
+              <TopBar />
+              <main className="pl-16 pt-16 p-4">
+                <Outlet />
+              </main>
+            </div>
+          </Suspense>
         ),
         children: [
           {
@@ -89,6 +91,54 @@ const routes = createHashRouter([
     ]
   }
 ])
+
+function Root() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasActiveSession, setHasActiveSession] = useState(false);
+  const { initialize } = useCustomerAuthStore();
+  
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        // Önce auth session'ı kontrol et
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          // Aktif oturum var mı kontrol et
+          const { data: sessions } = await supabase
+            .from('sessions')
+            .select('*')
+            .eq('customer_id', session.user.id)
+            .eq('status', 'active')
+            .is('end_time', null)
+            .maybeSingle();
+
+          if (sessions) {
+            setHasActiveSession(true);
+            // Auth store'u başlat
+            await initialize();
+          }
+        }
+      } catch (error) {
+        console.error('Session check error:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkSession();
+  }, []);
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (hasActiveSession) {
+    return <Navigate to="/app/dashboard" replace />;
+  }
+
+  return <Navigate to="/login" replace />;
+}
 
 function App() {
   const { initializeComputer } = useComputerStore();

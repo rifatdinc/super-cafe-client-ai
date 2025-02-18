@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Input } from '@/renderer/components/ui/input'
@@ -6,6 +6,8 @@ import { Button } from '@/renderer/components/ui/button'
 import { Label } from '@/renderer/components/ui/label'
 import { useCustomerAuthStore } from '@/renderer/lib/stores/customer-auth-store'
 import { Wallet } from 'lucide-react'
+import { supabase } from '@/renderer/lib/supabase'
+import { LoadingSpinner } from '@/renderer/components/ui/loading'
 
 interface LoginForm {
   email: string
@@ -18,8 +20,40 @@ export function LoginPage() {
     password: 'rafi41',
   })
   const [loading, setLoading] = useState(false)
+  const [checkingSession, setCheckingSession] = useState(true)
   const navigate = useNavigate()
   const { signIn } = useCustomerAuthStore()
+
+  useEffect(() => {
+    const checkActiveSession = async () => {
+      try {
+        // Önce auth session'ı kontrol et
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        if (session?.user) {
+          // Aktif oturum var mı kontrol et
+          const { data: activeSession } = await supabase
+            .from('sessions')
+            .select('*')
+            .eq('customer_id', session.user.id)
+            .eq('status', 'active')
+            .is('end_time', null)
+            .maybeSingle()
+
+          if (activeSession) {
+            navigate('/app/dashboard')
+            return
+          }
+        }
+      } catch (error) {
+        console.error('Active session check error:', error)
+      } finally {
+        setCheckingSession(false)
+      }
+    }
+
+    checkActiveSession()
+  }, [navigate])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -39,6 +73,24 @@ export function LoginPage() {
 
     try {
       setLoading(true)
+      
+      // Aktif session kontrolü
+      const { data: { session: authSession } } = await supabase.auth.getSession()
+      if (authSession?.user) {
+        const { data: activeSession } = await supabase
+          .from('sessions')
+          .select('*')
+          .eq('customer_id', authSession.user.id)
+          .eq('status', 'active')
+          .is('end_time', null)
+          .maybeSingle()
+
+        if (activeSession) {
+          navigate('/app/dashboard')
+          return
+        }
+      }
+
       const result = await signIn(formData.email, formData.password)
       
       if (!result?.success) {
@@ -74,6 +126,10 @@ export function LoginPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (checkingSession) {
+    return <LoadingSpinner />
   }
 
   return (
