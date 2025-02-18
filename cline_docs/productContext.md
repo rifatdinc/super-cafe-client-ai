@@ -33,6 +33,70 @@ Super Cafe AI is a cafe management system designed for Windows 10/11 platforms, 
 - Supabase for backend services
 - Real-time data synchronization
 
+# Product Context - Computer Management
+
+## User Stories
+
+### Computer Scanning
+As a cafe staff member, I want to:
+- Scan the network for available computers
+- See scan progress in real-time
+- Get notifications about scan results
+- Add found computers automatically
+
+### Computer Management
+As a cafe staff member, I want to:
+- View all computers in a table format
+- Add computers manually if needed
+- See computer status in real-time
+- Group and filter computers
+- Track computer usage history
+
+### Monitoring
+As a cafe admin, I want to:
+- Monitor computer status changes
+- Get alerts for disconnected computers
+- View computer usage analytics
+- Generate computer usage reports
+
+## UI/UX Requirements
+
+### Table View
+- Clear status indicators
+- Easy-to-read layout
+- Quick actions for common tasks
+- Responsive design for all screens
+
+### Notifications
+- Toast messages for actions
+- Status change alerts
+- Network scan results
+- Error notifications
+
+### Forms
+- Simple computer addition
+- Field validation
+- Clear error messages
+- Quick submission process
+
+## Future Enhancements
+1. Advanced Filtering
+   - Status-based filters
+   - Usage time filters
+   - Group-based filters
+
+2. Analytics Dashboard
+   - Usage patterns
+   - Peak hours
+   - Revenue per computer
+   - Maintenance scheduling
+
+3. Automation Features
+   - Auto-refresh status
+   - Scheduled scans
+   - Automatic maintenance alerts
+   - Usage optimization suggestions
+
 # Ürün Yönetim Sistemi
 
 ## Sistem Yapısı

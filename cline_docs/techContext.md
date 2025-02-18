@@ -178,3 +178,44 @@ src/
 - Prettier
 - TypeScript strict mode
 - Husky pre-commit hooks
+
+# Technical Implementation Details
+
+## Client-Side Computer Management
+
+### UI Components
+- Custom ComputerTable component with real-time updates
+- AddComputerDialog with form validation
+- Toast notifications for user feedback
+- Loading states and progress indicators
+- Responsive design with Tailwind CSS
+
+### State Management
+```typescript
+// Computer Store Structure
+interface ComputerState {
+  computers: Computer[]
+  isLoading: boolean
+  error: Error | null
+  selectedComputer: Computer | null
+}
+
+// Real-time Updates
+supabase
+  .channel('computers')
+  .on('UPDATE', handleComputerUpdate)
+  .on('INSERT', handleComputerAdd)
+  .subscribe()
+```
+
+### Error Handling
+- Toast notifications for network errors
+- Fallback UI components
+- Error boundary implementation
+- Retry mechanisms for failed operations
+
+### Performance Optimizations
+- Debounced search inputs
+- Virtualized table for large datasets
+- Optimistic UI updates
+- Memoized components

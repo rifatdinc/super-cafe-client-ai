@@ -1,4 +1,4 @@
-# Progress Status
+# Project Progress
 
 ## Completed Features 
 
@@ -152,3 +152,27 @@
 - Sipariş notu ekleme
 - Özel sipariş istekleri
 - Ürün değerlendirme sistemi
+
+## Recent Updates
+- Added Computer Management UI
+  - Responsive computer table implementation
+  - Add computer dialog with validation
+  - Real-time computer status indicators
+  - Network scanning progress UI with toast notifications
+- Enhanced Client Components
+  - Improved error handling with toast messages
+  - Added loading states and spinners
+  - Implemented Shadcn/ui components
+  - Added responsive layouts
+
+## Next Steps
+1. Short Term
+   - Add computer status history view
+   - Implement computer filtering and search
+   - Add computer grouping functionality
+   - Enhance real-time status updates
+2. Long Term
+   - Implement computer metrics dashboard
+   - Add computer usage analytics
+   - Enhance monitoring capabilities
+   - Add computer maintenance scheduling

@@ -1,4 +1,4 @@
-# System Patterns
+# System Patterns and Architecture
 
 ## Architecture Overview
 
@@ -134,6 +134,65 @@ try {
     description: error.message
   })
 }
+```
+
+## Computer Management UI Patterns
+
+### Component Architecture
+```typescript
+// Smart Container Pattern
+ComputersPage
+  ├─ ComputerTable (Data Display)
+  ├─ AddComputerDialog (Form)
+  └─ ActionButtons (Controls)
+
+// Container-Presenter Pattern
+ComputerTable
+  ├─ TableHeader (Presentation)
+  ├─ TableRows (Presentation)
+  └─ TableActions (Interactive)
+```
+
+### State Flow Pattern
+```mermaid
+graph TD
+    A[User Action] --> B[Store Action]
+    B --> C[API Request]
+    C --> D[Database Update]
+    D --> E[Real-time Event]
+    E --> F[Store Update]
+    F --> G[UI Update]
+```
+
+### UI Update Patterns
+- Optimistic Updates: Immediate UI feedback
+- Real-time Sync: Supabase subscription
+- Error Recovery: Revert on failure
+- Loading States: Progressive feedback
+
+### Form Handling Pattern
+```typescript
+// Form Management Pattern
+const AddComputerForm = {
+  validation: zod.object({...}),
+  onSubmit: async (data) => {
+    try {
+      await addComputer(data)
+      showSuccess()
+    } catch {
+      showError()
+    }
+  }
+}
+```
+
+### Error Boundary Pattern
+```typescript
+// Error Handling Strategy
+ErrorBoundary
+  ├─ Try: Normal Component Flow
+  ├─ Catch: Error State
+  └─ Finally: Cleanup Actions
 ```
 
 ## Build and Distribution

@@ -91,12 +91,28 @@ function getLocalIpAddress(): string {
   return 'localhost';
 }
 
+function getMacAddress(): string | null {
+  const interfaces = os.networkInterfaces();
+  for (const netInterface of Object.values(interfaces)) {
+    if (!netInterface) continue;
+    
+    for (const config of netInterface) {
+      // Only get the MAC address of the Ethernet interface that's not internal
+      if (config.family === 'IPv4' && !config.internal && config.mac) {
+        return config.mac;
+      }
+    }
+  }
+  return null;
+}
+
 // Function to register computer and manage status
 async function registerComputer() {
   try {
     const machineId = machineIdSync();
     const hostname = os.hostname();
     const ipAddress = getLocalIpAddress();
+    const macAddress = getMacAddress();
     
     // Get system information
     const specs = {
@@ -150,6 +166,7 @@ async function registerComputer() {
           status: 'available',
           location: 'Main Area', // Default location
           ip_address: ipAddress,
+          mac_address: macAddress,
           specifications: specs,
           last_maintenance: new Date().toISOString(),
           last_seen: new Date().toISOString()
@@ -173,6 +190,7 @@ async function registerComputer() {
           name: hostname,
           status: 'available',
           ip_address: ipAddress,
+          mac_address: macAddress,
           specifications: specs,
           last_seen: new Date().toISOString()
         })
@@ -193,6 +211,7 @@ async function registerComputer() {
           .update({
             last_seen: new Date().toISOString(),
             ip_address: ipAddress, // Update IP in case it changed
+            mac_address: macAddress,
             specifications: {
               ...specs,
               freeMemory: os.freemem() // Update current free memory

@@ -97,3 +97,61 @@ CREATE TABLE customers (
 2. Add customer profile management
 3. Enhance session management
 4. Add password reset functionality
+
+# Active Development Context
+
+## Current Focus
+- Computer management interface improvements
+- Real-time status monitoring enhancements
+- Network scanning reliability
+- User feedback and notifications
+
+## Active Issues
+1. Performance
+   - Table rendering optimization needed for large datasets
+   - Network scan response time improvements
+   - Real-time update batching for multiple status changes
+
+2. UX Improvements
+   - More detailed scan progress feedback
+   - Better error messages for network issues
+   - Improved loading states
+   - Computer grouping interface
+
+## Current Sprint Goals
+1. Primary Goals
+   - Enhance computer table filtering
+   - Add computer history view
+   - Implement computer groups
+   - Improve status indicators
+
+2. Secondary Goals
+   - Add search functionality
+   - Implement batch operations
+   - Add detailed computer info view
+   - Enhance notification system
+
+## Known Limitations
+- Network scan limited to local subnet
+- Status updates may delay under heavy load
+- Limited historical data storage
+- Basic metrics collection
+
+## Immediate TODOs
+1. Technical
+   - Optimize table rendering
+   - Add error retry logic
+   - Implement data caching
+   - Add offline support
+
+2. UI/UX
+   - Enhance loading indicators
+   - Add more detailed tooltips
+   - Improve mobile responsiveness
+   - Add keyboard shortcuts
+
+## Testing Focus
+- Network scan reliability
+- Real-time update accuracy
+- Form validation coverage
+- Error handling scenarios
