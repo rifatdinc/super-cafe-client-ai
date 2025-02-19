@@ -26,52 +26,43 @@ export class SystemService {
 
       if (platform === 'darwin') {
         try {
-          // MacOS için osascript kullanarak kapatma komutu
-          await this.executeCommand('osascript -e \'tell application "System Events" to shut down\'');
+          await this.executeCommand('osascript -e \'tell app "System Events" to shut down\'');
           shutdownSuccess = true;
         } catch (error) {
-          console.log('First shutdown method failed, trying alternative...');
+          console.log('First macOS shutdown method failed, trying alternative...');
           try {
-            // Alternatif komut
-            await this.executeCommand('osascript -e \'tell app "loginwindow" to «event aevtrsdn»\'');
+            await this.executeCommand('sudo shutdown -h now');
             shutdownSuccess = true;
           } catch (sudoError) {
-            console.log('Second shutdown method failed, trying final method...');
-            try {
-              // Son yöntem
-              await this.executeCommand('osascript -e \'tell app "System Events" to restart\'');
-              shutdownSuccess = true;
-            } catch (finalError) {
-              throw new Error('All shutdown methods failed');
-            }
+            throw new Error('All macOS shutdown methods failed');
           }
         }
       } else if (platform === 'win32') {
         try {
-          // İlk yöntem: shutdown komutu
-          await this.executeCommand('shutdown /s /t 0');
+          await this.executeCommand('shutdown /s /f /t 0');
           shutdownSuccess = true;
         } catch (error) {
           console.log('First Windows shutdown method failed, trying alternative...');
           try {
-            // İkinci yöntem: alternatif shutdown parametreleri
-            await this.executeCommand('shutdown /s /f /t 0');
+            await this.executeCommand('powershell -Command "Stop-Computer -Force"');
             shutdownSuccess = true;
-          } catch (secondError) {
-            console.log('Second Windows shutdown method failed, trying final method...');
-            try {
-              // Son yöntem: PowerShell üzerinden
-              await this.executeCommand('powershell -Command "Stop-Computer -Force"');
-              shutdownSuccess = true;
-            } catch (finalError) {
-              throw new Error('All Windows shutdown methods failed');
-            }
+          } catch (psError) {
+            throw new Error('All Windows shutdown methods failed');
           }
         }
       } else {
         // Linux için
-        await this.executeCommand('systemctl poweroff');
-        shutdownSuccess = true;
+        try {
+          await this.executeCommand('systemctl poweroff');
+          shutdownSuccess = true;
+        } catch (error) {
+          try {
+            await this.executeCommand('sudo shutdown -h now');
+            shutdownSuccess = true;
+          } catch (sudoError) {
+            throw new Error('All Linux shutdown methods failed');
+          }
+        }
       }
 
       return { success: shutdownSuccess };
@@ -83,11 +74,13 @@ export class SystemService {
 
   private executeCommand(command: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      exec(command, (error) => {
+      exec(command, (error, stdout, stderr) => {
         if (error) {
-          console.error('Command execution error:', error);
+          console.error(`Command execution error: ${error.message}`);
+          console.error(`stderr: ${stderr}`);
           reject(error);
         } else {
+          console.log(`Command output: ${stdout}`);
           resolve();
         }
       });

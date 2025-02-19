@@ -49,7 +49,6 @@ export class SocketService {
       console.log('[SocketService] Connected to Socket.IO server');
       this.notifyUI('success', 'Bağlantı Başarılı', 'Sunucu ile bağlantı kuruldu');
       
-      // Bağlantı kurulduğunda makine ID'sini kaydet
       const machineId = machineIdSync();
       console.log('[SocketService] Registering with machine ID:', machineId);
       this.socket?.emit(SOCKET_EVENTS.REGISTER, { machineId });
@@ -60,14 +59,15 @@ export class SocketService {
       try {
         if (data.type === 'shutdown') {
           console.log('[SocketService] Processing shutdown command...');
-          console.log('[SocketService] Current platform:', process.platform);
           
-          // Shutdown işlemini başlat
+          // Bilgisayarı offline yap ve servisi durdur
+          await this.computerService.setComputerOffline();
+          
+          // Sistemi kapat
           const result = await this.systemService.shutdownSystem();
           console.log('[SocketService] Shutdown result:', result);
           
           if (result.success) {
-            // Başarılı yanıt gönder
             this.socket?.emit(SOCKET_EVENTS.COMMAND_RESPONSE, {
               success: true,
               message: `Shutdown initiated successfully on ${process.platform}`,
@@ -87,7 +87,6 @@ export class SocketService {
           type: data.type
         });
         
-        // UI'da hata göster
         this.notifyUI('error', 'Kapatma Hatası', `Bilgisayar kapatılamadı: ${error.message}`);
       }
     });
