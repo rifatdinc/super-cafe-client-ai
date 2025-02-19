@@ -32,9 +32,7 @@ export default defineConfig(({ mode }) => {
       emptyOutDir: true,
       target: 'esnext',
       rollupOptions: {
-        input: {
-          main: path.join(__dirname, 'src/renderer/index.html')
-        }
+        input: path.join(__dirname, 'src/renderer/index.html')
       }
     }
   }

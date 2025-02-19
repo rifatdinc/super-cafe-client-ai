@@ -17,6 +17,9 @@ import { Sidebar } from '@/renderer/components/Sidebar'
 import { OrderPage } from './pages/orders'
 import { OrderHistoryPage } from './pages/order-history'
 import { supabase } from './lib/supabase'
+import { Socket } from "socket.io-client";
+
+let socket: Socket | null = null;
 
 const routes = createHashRouter([
   {
@@ -95,11 +98,14 @@ const routes = createHashRouter([
 function Root() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasActiveSession, setHasActiveSession] = useState(false);
-  const { initialize } = useCustomerAuthStore();
+  const { initialize, initializeRealtimeSubscription } = useCustomerAuthStore();
   
   useEffect(() => {
     const checkSession = async () => {
       try {
+        // Initialize realtime subscription
+        await initializeRealtimeSubscription();
+        
         // Önce auth session'ı kontrol et
         const { data: { session } } = await supabase.auth.getSession();
         
@@ -127,7 +133,7 @@ function Root() {
     };
 
     checkSession();
-  }, []);
+  }, [initialize, initializeRealtimeSubscription]);
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -162,6 +168,13 @@ function App() {
         console.error('Failed to initialize computer:', error);
       });
     }
+    
+    return () => {
+      if (socket) {
+        socket.disconnect();
+        socket = null;
+      }
+    };
   }, [isElectronReady, initializeComputer]);
 
   return <RouterProvider router={routes} />;

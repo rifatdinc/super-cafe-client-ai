@@ -6,10 +6,11 @@
   "scripts": {
     "dev": "concurrently -k \"cross-env BROWSER=none npm run dev:vite\" \"wait-on tcp:9002 && npm run dev:electron\"",
     "dev:vite": "cross-env NODE_ENV=development vite --host --port 9002 --mode development",
-    "dev:electron": "cross-env NODE_ENV=development wait-on tcp:9002 && tsc -p tsconfig.electron.json && electron .",
-    "build": "npm run build:vite && npm run build:electron",
+    "dev:electron": "cross-env NODE_ENV=development wait-on tcp:9002 && vite build --config vite.preload.config.ts && electron .",
+    "build": "npm run build:vite && npm run build:electron && npm run build:main",
     "build:vite": "vite build",
-    "build:electron": "tsc -p tsconfig.electron.json",
+    "build:electron": "vite build --config vite.preload.config.ts",
+    "build:main": "tsc -p tsconfig.electron.json",
     "preview": "vite preview",
     "start": "electron ."
   },
@@ -77,6 +78,8 @@
     "react-hook-form": "^7.54.2",
     "react-i18next": "^15.4.0",
     "react-router-dom": "^6.0.0",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
     "sonner": "^1.7.4",
     "systeminformation": "^5.25.11",
     "usehooks-ts": "^3.1.1"

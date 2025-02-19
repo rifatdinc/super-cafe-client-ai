@@ -5,6 +5,8 @@ import { createClient } from '@supabase/supabase-js';
 import { machineIdSync } from 'node-machine-id';
 import os from 'os';
 import * as si from 'systeminformation';
+import { exec } from 'child_process';
+import { io, Socket } from 'socket.io-client';
 
 const supabaseUrl = 'http://127.0.0.1:54321'
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0'
@@ -13,6 +15,111 @@ export const supabase = createClient(supabaseUrl, supabaseKey)
 
 let mainWindow: BrowserWindow | null = null;
 let currentComputerId: string | null = null;
+
+// Socket.IO client bağlantısı
+let socket: Socket | null = null;
+
+// Socket error handler
+ipcMain.on('socket-error', (_, error) => {
+  console.error('Socket error received:', error);
+  mainWindow?.webContents.send('show-notification', {
+    type: 'error',
+    title: 'Bağlantı Hatası',
+    message: error.message || 'Sunucu ile bağlantı kurulamadı'
+  });
+});
+
+function initializeSocketClient() {
+  if (!socket) {
+    socket = io('http://localhost:8080', {
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 10000,
+    });
+
+    socket.on('connect', () => {
+      console.log('Connected to Socket.IO server');
+      mainWindow?.webContents.send('show-notification', {
+        type: 'success',
+        title: 'Bağlantı Başarılı',
+        message: 'Sunucu ile bağlantı kuruldu'
+      });
+      // Bilgisayar kimliğini sunucuya gönder
+      socket.emit('register', { machineId: machineIdSync() });
+    });
+
+    socket.on('command', async (data) => {
+      console.log('Received command:', data);
+      try {
+        if (data.type === 'shutdown') {
+          const platform = process.platform;
+          let command = '';
+
+          switch (platform) {
+            case 'win32':
+              command = 'shutdown /s /t 0';
+              break;
+            case 'darwin':
+              command = 'sudo shutdown -h now';
+              break;
+            case 'linux':
+              command = 'sudo shutdown -h now';
+              break;
+            default:
+              throw new Error('Unsupported platform for shutdown');
+          }
+
+          exec(command, (error) => {
+            if (error) {
+              socket?.emit('command_response', {
+                success: false,
+                error: error.message,
+                command: data.type
+              });
+              return;
+            }
+            socket?.emit('command_response', {
+              success: true,
+              message: 'Shutdown initiated',
+              command: data.type
+            });
+          });
+        } else if (data.type === 'system_metrics') {
+          const metrics = {
+            cpuUsage: os.loadavg()[0],
+            totalMemory: os.totalmem(),
+            freeMemory: os.freemem(),
+            uptime: os.uptime()
+          };
+          socket?.emit('system_metrics_response', { success: true, data: metrics });
+        }
+      } catch (error: any) {
+        console.error('Command execution error:', error);
+        socket?.emit('command_response', {
+          success: false,
+          error: error.message,
+          command: data.type
+        });
+      }
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Disconnected from Socket.IO server');
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Connection error:', error);
+      mainWindow?.webContents.send('show-notification', {
+        type: 'error',
+        title: 'Bağlantı Hatası',
+        message: 'Sunucu ile bağlantı kurulamadı: ' + error.message
+      });
+    });
+  }
+  return socket;
+}
 
 // Set environment variables
 const isDev = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === undefined;
@@ -252,8 +359,6 @@ async function setComputerOffline() {
 
 async function createWindow() {
   try {
-    // Register computer when app starts
-
     // Create the browser window.
     mainWindow = new BrowserWindow({
       width: 1280,
@@ -290,21 +395,8 @@ async function createWindow() {
       await loadProductionBuild();
     }
 
-    // Window cleanup
-    mainWindow.on('closed', () => {
-      mainWindow = null;
-    });
-
-    // Window controls for non-macOS
-    if (!isMac) {
-      mainWindow.on('maximize', () => {
-        mainWindow?.webContents.send('window-state-change', 'maximized');
-      });
-
-      mainWindow.on('unmaximize', () => {
-        mainWindow?.webContents.send('window-state-change', 'normal');
-      });
-    }
+    // Initialize Socket.IO client
+    initializeSocketClient();
     
     await registerComputer();
 
@@ -347,6 +439,9 @@ app.whenReady().then(createWindow);
 
 app.on('window-all-closed', async () => {
   await setComputerOffline();
+  if (socket) {
+    socket.disconnect();
+  }
   if (!isMac) {
     app.quit();
   }
@@ -355,6 +450,9 @@ app.on('window-all-closed', async () => {
 app.on('before-quit', async (event) => {
   event.preventDefault();
   await setComputerOffline();
+  if (socket) {
+    socket.disconnect();
+  }
   app.exit();
 });
 
@@ -379,4 +477,33 @@ ipcMain.on('maximize-window', () => {
 
 ipcMain.on('close-window', () => {
   mainWindow?.close();
+});
+
+// System shutdown handler
+ipcMain.on('system-shutdown', () => {
+  const platform = process.platform;
+  let command = '';
+
+  switch (platform) {
+    case 'win32':
+      command = 'shutdown /s /t 0';
+      break;
+    case 'darwin':
+      command = 'sudo shutdown -h now';
+      break;
+    case 'linux':
+      command = 'sudo shutdown -h now';
+      break;
+    default:
+      console.error('Unsupported platform for shutdown');
+      return;
+  }
+
+  exec(command, (error) => {
+    if (error) {
+      console.error('Shutdown error:', error);
+      return;
+    }
+    console.log('System shutdown initiated');
+  });
 });

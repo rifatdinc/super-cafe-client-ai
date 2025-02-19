@@ -19,6 +19,7 @@ interface CustomerAuthState {
   initialize: () => Promise<void>
   updateCustomer: (customerData: { id: string; full_name: string; email: string; phone: string }) => Promise<void>
   refreshCustomerData: () => Promise<void>
+  initializeRealtimeSubscription: () => Promise<void>
 }
 
 export const useCustomerAuthStore = create<CustomerAuthState>((set, get) => ({
@@ -214,6 +215,28 @@ export const useCustomerAuthStore = create<CustomerAuthState>((set, get) => ({
       throw error;
     }
   },
+
+  initializeRealtimeSubscription: async () => {
+    const subscription = supabase
+      .channel('session_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sessions',
+        },
+        async () => {
+          // Oturum değişikliklerinde müşteriyi yenile
+          await get().refreshCustomerData()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(subscription)
+    }
+  }
 }))
 
 // Initialize auth state when the store is imported

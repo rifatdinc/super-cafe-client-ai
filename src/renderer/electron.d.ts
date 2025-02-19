@@ -4,7 +4,6 @@ interface IpcRenderer {
   once: (channel: string, func: (...args: any[]) => void) => void;
   removeListener: (channel: string, func: (...args: any[]) => void) => void;
   send: (channel: string, data: any) => void;
-  scanComputers: (data: { startIP: string; endIP: string }) => Promise<any>;
 }
 
 interface SystemInfo {
@@ -15,12 +14,32 @@ interface SystemInfo {
   graphics: any;
 }
 
+interface IElectronAPI {
+  ipcRenderer: {
+    send: (channel: string, ...args: any[]) => void
+    invoke: (channel: string, ...args: any[]) => Promise<any>
+    on: (channel: string, func: (...args: any[]) => void) => void
+    removeListener: (channel: string, func: (...args: any[]) => void) => void
+    getNetworkInfo: () => Promise<any>
+    sendWakeOnLan: (macAddress: string, ipAddress?: string) => Promise<any>
+  }
+  socket: {
+    connect: () => {
+      on: (event: string, callback: (...args: any[]) => void) => void
+      emit: (event: string, data: any) => void
+      disconnect: () => void
+    }
+  }
+}
+
 declare global {
   interface Window {
-    electron: {
-      ipcRenderer: IpcRenderer;
-      getMachineId: () => Promise<string>;
-      getSystemInfo: () => Promise<SystemInfo>;
+    electron: IElectronAPI
+  }
+
+  namespace React {
+    interface CSSProperties {
+      WebkitAppRegion?: 'drag' | 'no-drag';
     }
   }
 }
