@@ -53,13 +53,8 @@ export class WindowService {
       // Load application
       if (this.isDev) {
         console.log('Starting in development mode...');
-        const devServerConnected = await this.tryConnectDevServer();
-        if (!devServerConnected) {
-          console.log('Dev server connection failed, showing error page');
-          await this.showErrorPage();
-        } else {
-          this.mainWindow.webContents.openDevTools();
-        }
+        await this.mainWindow.loadURL(config.dev.serverUrl);
+        this.mainWindow.webContents.openDevTools();
       } else {
         console.log('Starting in production mode...');
         await this.loadProductionBuild();
@@ -78,25 +73,6 @@ export class WindowService {
       app.quit();
       throw error;
     }
-  }
-
-  private async tryConnectDevServer(retries = 3, delay = 1000): Promise<boolean> {
-    for (let i = 0; i < retries; i++) {
-      try {
-        if (this.mainWindow) {
-          const response = await fetch(config.dev.serverUrl);
-          if (response.ok) {
-            await this.mainWindow.loadURL(config.dev.serverUrl);
-            console.log('Successfully connected to dev server');
-            return true;
-          }
-        }
-      } catch (err) {
-        console.log(`Dev server connection attempt ${i + 1}/${retries} failed`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-    }
-    return false;
   }
 
   private async showErrorPage(): Promise<void> {
