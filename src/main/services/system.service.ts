@@ -26,28 +26,51 @@ export class SystemService {
 
       if (platform === 'darwin') {
         try {
-          // İlk yöntem: AppleScript
-          await this.executeMacShutdown('tell app "System Events" to shut down');
+          // MacOS için osascript kullanarak kapatma komutu
+          await this.executeCommand('osascript -e \'tell application "System Events" to shut down\'');
           shutdownSuccess = true;
         } catch (error) {
           console.log('First shutdown method failed, trying alternative...');
           try {
-            // İkinci yöntem: sudo shutdown
-            await this.executeCommand('sudo shutdown -h now');
+            // Alternatif komut
+            await this.executeCommand('osascript -e \'tell app "loginwindow" to «event aevtrsdn»\'');
             shutdownSuccess = true;
           } catch (sudoError) {
             console.log('Second shutdown method failed, trying final method...');
-            // Son yöntem: Finder üzerinden
-            await this.executeMacShutdown('tell application "Finder" to shut down');
+            try {
+              // Son yöntem
+              await this.executeCommand('osascript -e \'tell app "System Events" to restart\'');
+              shutdownSuccess = true;
+            } catch (finalError) {
+              throw new Error('All shutdown methods failed');
+            }
+          }
+        }
+      } else if (platform === 'win32') {
+        try {
+          // İlk yöntem: shutdown komutu
+          await this.executeCommand('shutdown /s /t 0');
+          shutdownSuccess = true;
+        } catch (error) {
+          console.log('First Windows shutdown method failed, trying alternative...');
+          try {
+            // İkinci yöntem: alternatif shutdown parametreleri
+            await this.executeCommand('shutdown /s /f /t 0');
             shutdownSuccess = true;
+          } catch (secondError) {
+            console.log('Second Windows shutdown method failed, trying final method...');
+            try {
+              // Son yöntem: PowerShell üzerinden
+              await this.executeCommand('powershell -Command "Stop-Computer -Force"');
+              shutdownSuccess = true;
+            } catch (finalError) {
+              throw new Error('All Windows shutdown methods failed');
+            }
           }
         }
       } else {
-        const command = platform === 'win32' 
-          ? 'shutdown /s /t 0' 
-          : 'systemctl poweroff';
-
-        await this.executeCommand(command);
+        // Linux için
+        await this.executeCommand('systemctl poweroff');
         shutdownSuccess = true;
       }
 
@@ -58,22 +81,11 @@ export class SystemService {
     }
   }
 
-  private executeMacShutdown(script: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      exec(`osascript -e '${script}'`, (error) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve();
-        }
-      });
-    });
-  }
-
   private executeCommand(command: string): Promise<void> {
     return new Promise((resolve, reject) => {
       exec(command, (error) => {
         if (error) {
+          console.error('Command execution error:', error);
           reject(error);
         } else {
           resolve();
@@ -84,58 +96,32 @@ export class SystemService {
 
   async restartSystem(): Promise<{ success: boolean; error?: string }> {
     try {
-      await this.computerService.setComputerOffline();
-      
       const platform = process.platform;
-      let command = '';
-
-      switch (platform) {
-        case 'win32':
-          command = 'shutdown /r /t 0';
-          break;
-        case 'darwin':
-          command = 'osascript -e \'tell app "System Events" to restart\'';
-          break;
-        case 'linux':
-          command = 'systemctl reboot';
-          break;
-        default:
-          throw new Error('Unsupported platform for restart');
-      }
+      const command = platform === 'darwin'
+        ? 'osascript -e \'tell app "System Events" to restart\''
+        : platform === 'win32'
+          ? 'shutdown /r /t 0'
+          : 'systemctl reboot';
 
       await this.executeCommand(command);
       return { success: true };
     } catch (error: any) {
-      console.error('Restart error:', error);
       return { success: false, error: error.message };
     }
   }
 
   async logoutUser(): Promise<{ success: boolean; error?: string }> {
     try {
-      await this.computerService.setComputerOffline();
-      
       const platform = process.platform;
-      let command = '';
-
-      switch (platform) {
-        case 'win32':
-          command = 'shutdown /l';
-          break;
-        case 'darwin':
-          command = 'osascript -e \'tell app "System Events" to log out\'';
-          break;
-        case 'linux':
-          command = 'gnome-session-quit --logout --force';
-          break;
-        default:
-          throw new Error('Unsupported platform for logout');
-      }
+      const command = platform === 'darwin'
+        ? 'osascript -e \'tell app "System Events" to log out\''
+        : platform === 'win32'
+          ? 'shutdown /l'
+          : 'systemctl logout';
 
       await this.executeCommand(command);
       return { success: true };
     } catch (error: any) {
-      console.error('Logout error:', error);
       return { success: false, error: error.message };
     }
   }

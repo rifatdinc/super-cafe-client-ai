@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
-    envDir: '.',
+    envDir: './',
     envPrefix: 'VITE_',
     root: path.join(__dirname, 'src/renderer'),
     publicDir: path.join(__dirname, 'public'),

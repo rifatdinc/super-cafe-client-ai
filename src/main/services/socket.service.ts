@@ -29,12 +29,17 @@ export class SocketService {
     this.mainWindow = window;
   }
 
-  initialize(): Socket {
-    if (!this.socket) {
+  initialize() {
+    if (this.socket) return;
+
+    console.log('Initializing socket connection...');
+    try {
       this.socket = io(config.socket.url, config.socket.options);
       this.setupEventHandlers();
+    } catch (error) {
+      console.error('Socket initialization error:', error);
+      this.notifyUI('error', 'Bağlantı Hatası', 'Socket başlatılamadı');
     }
-    return this.socket;
   }
 
   private setupEventHandlers() {
@@ -43,25 +48,34 @@ export class SocketService {
     this.socket.on(SOCKET_EVENTS.CONNECT, () => {
       console.log('[SocketService] Connected to Socket.IO server');
       this.notifyUI('success', 'Bağlantı Başarılı', 'Sunucu ile bağlantı kuruldu');
-      this.socket?.emit(SOCKET_EVENTS.REGISTER, { machineId: machineIdSync() });
+      
+      // Bağlantı kurulduğunda makine ID'sini kaydet
+      const machineId = machineIdSync();
+      console.log('[SocketService] Registering with machine ID:', machineId);
+      this.socket?.emit(SOCKET_EVENTS.REGISTER, { machineId });
     });
 
     this.socket.on(SOCKET_EVENTS.COMMAND, async (data) => {
       console.log('[SocketService] Received command:', data);
       try {
         if (data.type === 'shutdown') {
-          console.log('[SocketService] Executing shutdown command...');
+          console.log('[SocketService] Processing shutdown command...');
+          console.log('[SocketService] Current platform:', process.platform);
+          
+          // Shutdown işlemini başlat
           const result = await this.systemService.shutdownSystem();
           console.log('[SocketService] Shutdown result:', result);
           
           if (result.success) {
+            // Başarılı yanıt gönder
             this.socket?.emit(SOCKET_EVENTS.COMMAND_RESPONSE, {
               success: true,
-              message: 'Shutdown initiated',
+              message: `Shutdown initiated successfully on ${process.platform}`,
+              platform: process.platform,
               type: 'shutdown'
             });
           } else {
-            throw new Error(result.error || 'Shutdown failed');
+            throw new Error(result.error || 'Shutdown failed without specific error');
           }
         }
       } catch (error: any) {
@@ -69,19 +83,23 @@ export class SocketService {
         this.socket?.emit(SOCKET_EVENTS.COMMAND_RESPONSE, {
           success: false,
           error: error.message,
+          platform: process.platform,
           type: data.type
         });
+        
+        // UI'da hata göster
+        this.notifyUI('error', 'Kapatma Hatası', `Bilgisayar kapatılamadı: ${error.message}`);
       }
     });
 
     this.socket.on(SOCKET_EVENTS.DISCONNECT, () => {
-      console.log('Disconnected from Socket.IO server');
+      console.log('[SocketService] Disconnected from server');
       this.notifyUI('error', 'Bağlantı Kesildi', 'Sunucu bağlantısı kesildi');
     });
 
     this.socket.on(SOCKET_EVENTS.CONNECT_ERROR, (error) => {
-      console.error('Connection error:', error);
-      this.notifyUI('error', 'Bağlantı Hatası', 'Sunucu ile bağlantı kurulamadı: ' + error.message);
+      console.error('[SocketService] Connection error:', error);
+      this.notifyUI('error', 'Bağlantı Hatası', 'Sunucu bağlantısı kurulamadı: ' + error.message);
     });
 
     this.socket.on(SOCKET_EVENTS.SYSTEM_METRICS, async () => {
@@ -101,11 +119,14 @@ export class SocketService {
   }
 
   private notifyUI(type: 'success' | 'error', title: string, message: string) {
-    this.mainWindow?.webContents.send(IPC_CHANNELS.SHOW_NOTIFICATION, { type, title, message });
+    if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+      this.mainWindow.webContents.send('notification', { type, title, message });
+    }
   }
 
   disconnect() {
     if (this.socket) {
+      console.log('[SocketService] Disconnecting socket...');
       this.socket.disconnect();
       this.socket = null;
     }

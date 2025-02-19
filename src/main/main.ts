@@ -3,6 +3,10 @@ import { WindowService } from './services/window.service';
 import { ComputerService } from './services/computer.service';
 import { SystemService } from './services/system.service';
 import { SocketService } from './services/socket.service';
+import { loadEnvironmentVariables } from './utils/env';
+
+// Environment variables'ları yükle
+loadEnvironmentVariables();
 
 // Service instances
 const windowService = WindowService.getInstance();
