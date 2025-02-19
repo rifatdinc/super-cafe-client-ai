@@ -11,7 +11,7 @@ export class ComputerService {
   private static instance: ComputerService;
   private supabase = createClient(config.supabase.url, config.supabase.anonKey);
   private currentComputerId: string | null = null;
-  private updateInterval: NodeJS.Timer | null = null;
+  private updateInterval: NodeJS.Timeout | null = null;
 
   private constructor() {}
 
