@@ -1,0 +1,19 @@
+src/
+  main/
+    core/
+      types/
+        computer.types.ts
+      config.ts
+      constants.ts
+    services/
+      computer.service.ts
+      socket.service.ts
+      system.service.ts
+    utils/
+      system.utils.ts
+      network.utils.ts
+    window/
+      window.service.ts
+      error-page.service.ts
+    main.ts
+    preload.ts
