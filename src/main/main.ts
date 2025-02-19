@@ -62,45 +62,48 @@ function initializeSocketClient() {
               command = 'shutdown /s /t 0';
               break;
             case 'darwin':
-              command = 'sudo shutdown -h now';
+              command = 'osascript -e \'tell app "System Events" to shut down\'';
               break;
             case 'linux':
-              command = 'sudo shutdown -h now';
+              command = 'systemctl poweroff';
               break;
             default:
               throw new Error('Unsupported platform for shutdown');
           }
 
+          // Önce offline durumuna geç
+          await setComputerOffline();
+
+          // Kapatma komutunu çalıştır
           exec(command, (error) => {
             if (error) {
+              console.error('Shutdown error:', error);
               socket?.emit('command_response', {
                 success: false,
                 error: error.message,
-                command: data.type
+                type: 'shutdown'
               });
               return;
             }
+            
             socket?.emit('command_response', {
               success: true,
               message: 'Shutdown initiated',
-              command: data.type
+              type: 'shutdown'
             });
+
+            // Uygulamayı kapat
+            setTimeout(() => {
+              app.quit();
+            }, 1000);
           });
-        } else if (data.type === 'system_metrics') {
-          const metrics = {
-            cpuUsage: os.loadavg()[0],
-            totalMemory: os.totalmem(),
-            freeMemory: os.freemem(),
-            uptime: os.uptime()
-          };
-          socket?.emit('system_metrics_response', { success: true, data: metrics });
         }
       } catch (error: any) {
         console.error('Command execution error:', error);
         socket?.emit('command_response', {
           success: false,
           error: error.message,
-          command: data.type
+          type: data.type
         });
       }
     });
