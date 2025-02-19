@@ -54,6 +54,17 @@ export class SocketService {
       this.socket?.emit(SOCKET_EVENTS.REGISTER, { machineId });
     });
 
+    this.socket.on(SOCKET_EVENTS.REGISTERED, (response) => {
+      console.log('[SocketService] Registration response:', response);
+      if (response.success) {
+        console.log('[SocketService] Successfully registered with socket ID:', response.socketId);
+        this.notifyUI('success', 'Kayıt Başarılı', 'Bilgisayar başarıyla kaydedildi');
+      } else {
+        console.error('[SocketService] Registration failed:', response.error);
+        this.notifyUI('error', 'Kayıt Hatası', 'Bilgisayar kaydedilemedi: ' + response.error);
+      }
+    });
+
     this.socket.on(SOCKET_EVENTS.COMMAND, async (data) => {
       console.log('[SocketService] Received command:', data);
       try {
@@ -72,7 +83,8 @@ export class SocketService {
               success: true,
               message: `Shutdown initiated successfully on ${process.platform}`,
               platform: process.platform,
-              type: 'shutdown'
+              type: 'shutdown',
+              machineId: machineIdSync()
             });
           } else {
             throw new Error(result.error || 'Shutdown failed without specific error');
@@ -84,7 +96,8 @@ export class SocketService {
           success: false,
           error: error.message,
           platform: process.platform,
-          type: data.type
+          type: data.type,
+          machineId: machineIdSync()
         });
         
         this.notifyUI('error', 'Kapatma Hatası', `Bilgisayar kapatılamadı: ${error.message}`);
