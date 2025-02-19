@@ -20,6 +20,6 @@ export const config = {
     version: '1.0.0'
   },
   dev: {
-    serverUrl: 'http://0.0.0.0:9002'
+    serverUrl: 'http://localhost:9002'
   }
 };
