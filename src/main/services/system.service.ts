@@ -25,17 +25,24 @@ export class SystemService {
       let shutdownSuccess = false;
 
       if (platform === 'darwin') {
-        // MacOS için iki farklı yöntem dene
         try {
+          // İlk yöntem: AppleScript
           await this.executeMacShutdown('tell app "System Events" to shut down');
           shutdownSuccess = true;
         } catch (error) {
           console.log('First shutdown method failed, trying alternative...');
-          await this.executeMacShutdown('tell application "Finder" to shut down');
-          shutdownSuccess = true;
+          try {
+            // İkinci yöntem: sudo shutdown
+            await this.executeCommand('sudo shutdown -h now');
+            shutdownSuccess = true;
+          } catch (sudoError) {
+            console.log('Second shutdown method failed, trying final method...');
+            // Son yöntem: Finder üzerinden
+            await this.executeMacShutdown('tell application "Finder" to shut down');
+            shutdownSuccess = true;
+          }
         }
       } else {
-        // Windows ve Linux için
         const command = platform === 'win32' 
           ? 'shutdown /s /t 0' 
           : 'systemctl poweroff';

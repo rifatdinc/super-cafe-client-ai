@@ -4,3 +4,4 @@ dist
 placeholder.mp4
 tsconfig.electron.tsbuildinfo
 .idea
+release

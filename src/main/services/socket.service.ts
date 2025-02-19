@@ -41,16 +41,19 @@ export class SocketService {
     if (!this.socket) return;
 
     this.socket.on(SOCKET_EVENTS.CONNECT, () => {
-      console.log('Connected to Socket.IO server');
+      console.log('[SocketService] Connected to Socket.IO server');
       this.notifyUI('success', 'Bağlantı Başarılı', 'Sunucu ile bağlantı kuruldu');
       this.socket?.emit(SOCKET_EVENTS.REGISTER, { machineId: machineIdSync() });
     });
 
     this.socket.on(SOCKET_EVENTS.COMMAND, async (data) => {
-      console.log('Received command:', data);
+      console.log('[SocketService] Received command:', data);
       try {
         if (data.type === 'shutdown') {
+          console.log('[SocketService] Executing shutdown command...');
           const result = await this.systemService.shutdownSystem();
+          console.log('[SocketService] Shutdown result:', result);
+          
           if (result.success) {
             this.socket?.emit(SOCKET_EVENTS.COMMAND_RESPONSE, {
               success: true,
@@ -62,7 +65,7 @@ export class SocketService {
           }
         }
       } catch (error: any) {
-        console.error('Command execution error:', error);
+        console.error('[SocketService] Command execution error:', error);
         this.socket?.emit(SOCKET_EVENTS.COMMAND_RESPONSE, {
           success: false,
           error: error.message,

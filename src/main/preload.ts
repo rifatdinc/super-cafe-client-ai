@@ -1,28 +1,33 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { io, Socket } from 'socket.io-client';
+import { config } from './core/config';
 
 let socket: Socket | null = null;
 
 function initializeSocket() {
   if (!socket) {
-    socket = io('http://localhost:8080', {
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      timeout: 10000,
+    console.log('Initializing Socket.IO connection to:', config.socket.url);
+    socket = io(config.socket.url, {
+      reconnection: config.socket.options.reconnection,
+      reconnectionAttempts: config.socket.options.reconnectionAttempts,
+      reconnectionDelay: config.socket.options.reconnectionDelay,
+      reconnectionDelayMax: config.socket.options.reconnectionDelayMax,
+      timeout: config.socket.options.timeout,
     });
     
     socket.on('connect', () => {
       console.log('Connected to Socket.IO server');
+      console.log('Socket ID:', socket?.id);
+      console.log('Transport:', socket?.io.engine.transport.name);
     });
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', (reason) => {
       console.log('Disconnected from Socket.IO server');
+      console.log('Disconnect reason:', reason);
     });
 
     socket.on('connect_error', (error) => {
-      console.error('Connection error:', error);
+      console.error('Connection error:', error.message);
       ipcRenderer.send('socket-error', {
         type: 'connect_error',
         message: error.message
@@ -43,6 +48,29 @@ function initializeSocket() {
         type: 'error',
         message: error.message || 'Unknown socket error'
       });
+    });
+
+    // Add handlers for registration events
+    socket.on('registered', (response) => {
+      console.log('Registration response:', response);
+      if (response.success) {
+        console.log('Successfully registered with server');
+      } else {
+        console.error('Registration failed:', response.error);
+      }
+    });
+
+    // Monitor reconnection attempts
+    socket.io.on('reconnect_attempt', (attemptNumber) => {
+      console.log('Attempting to reconnect:', attemptNumber);
+    });
+
+    socket.io.on('reconnect', (attemptNumber) => {
+      console.log('Successfully reconnected after', attemptNumber, 'attempts');
+    });
+
+    socket.io.on('reconnect_failed', () => {
+      console.error('Failed to reconnect after all attempts');
     });
   }
   return socket;

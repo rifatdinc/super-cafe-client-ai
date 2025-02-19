@@ -1,5 +1,5 @@
 {
-  "name": "super-cafe-ai",
+  "name": "zenith",
   "version": "1.0.0",
   "description": "Internet Cafe Management System",
   "main": "dist/main/main.js",
@@ -12,42 +12,34 @@
     "build:electron": "vite build --config vite.preload.config.ts",
     "build:main": "tsc -p tsconfig.electron.json",
     "preview": "vite preview",
-    "start": "electron ."
+    "start": "electron .",
+    "build:mac": "electron-builder --mac",
+    "dist": "npm run build && npm run build:mac"
   },
   "build": {
-    "appId": "com.rafi.cafe",
-    "productName": "Super Cafe",
-    "name": "Super Cafe",
-    "title": "Super Cafe",
+    "appId": "com.zenith.cafe",
+    "productName": "Zenith",
     "directories": {
       "output": "release/"
     },
     "files": [
       "dist/**/*",
       "package.json",
-      "public/**/*"
+      "public/**/*",
+      "build/**/*"
     ],
-    "extraMetadata": {
-      "main": "dist/main/main.js",
-      "name": "Super Cafe"
-    },
     "mac": {
-      "target": [
-        "dmg"
-      ],
-      "icon": "public/logo.png"
-    },
-    "win": {
-      "target": [
-        "nsis"
-      ],
-      "icon": "public/logo.png"
-    },
-    "linux": {
-      "target": [
-        "AppImage"
-      ],
-      "icon": "public/logo.png"
+      "target": ["dmg"],
+      "icon": "public/logo.icns",
+      "category": "public.app-category.productivity",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "executableName": "Zenith",
+      "extendInfo": {
+        "LSApplicationCategoryType": "public.app-category.productivity",
+        "CFBundlePackageType": "APPL",
+        "CFBundleDisplayName": "Zenith"
+      }
     }
   },
   "keywords": [],
@@ -67,7 +59,6 @@
     "@radix-ui/react-tabs": "^1.1.3",
     "@supabase/supabase-js": "^2.48.1",
     "@tanstack/react-table": "^8.20.6",
-    "electron": "latest",
     "framer-motion": "^12.4.3",
     "i18next": "^24.2.2",
     "i18next-browser-languagedetector": "^8.0.3",
@@ -98,6 +89,7 @@
     "concurrently": "^8.0.1",
     "cross-env": "^7.0.3",
     "date-fns": "^4.1.0",
+    "electron": "latest",
     "electron-builder": "^24.13.3",
     "lucide-react": "^0.474.0",
     "postcss": "^8.5.1",

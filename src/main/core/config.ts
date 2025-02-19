@@ -13,6 +13,10 @@ export const config = {
       timeout: 10000
     }
   },
+  app: {
+    name: 'Zenith',
+    version: '1.0.0'
+  },
   dev: {
     serverUrl: 'http://localhost:9002'
   }

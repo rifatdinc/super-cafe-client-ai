@@ -20,11 +20,16 @@ export class WindowService {
 
   async createMainWindow(): Promise<BrowserWindow> {
     try {
+      if (this.isMac) {
+        app.name = 'Zenith';
+      }
+      
       this.mainWindow = new BrowserWindow({
         width: 1280,
         height: 720,
         minWidth: 1024,
         minHeight: 768,
+        title: 'Zenith',
         icon: path.join(__dirname, '../../../public/logo.png'),
         webPreferences: {
           nodeIntegration: false,
@@ -39,6 +44,11 @@ export class WindowService {
         movable: true,
         center: true,
       });
+
+      // Set application name for macOS
+      if (this.isMac) {
+        this.mainWindow.setTitle('Zenith');
+      }
 
       // Load application
       if (this.isDev) {

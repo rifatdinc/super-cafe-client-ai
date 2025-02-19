@@ -29,7 +29,15 @@ ipcMain.handle('get-system-info', async () => {
 
 // System command handlers
 ipcMain.handle('system-shutdown', async () => {
-  return await systemService.shutdownSystem();
+  console.log('[Main Process] Handling system-shutdown request');
+  try {
+    const result = await systemService.shutdownSystem();
+    console.log('[Main Process] Shutdown result:', result);
+    return result;
+  } catch (error) {
+    console.error('[Main Process] Shutdown error:', error);
+    throw error;
+  }
 });
 
 ipcMain.handle('system-restart', async () => {
