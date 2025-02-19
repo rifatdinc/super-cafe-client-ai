@@ -55,48 +55,72 @@ function initializeSocketClient() {
       try {
         if (data.type === 'shutdown') {
           const platform = process.platform;
-          let command = '';
+          let shutdownSuccess = false;
 
-          switch (platform) {
-            case 'win32':
-              command = 'shutdown /s /t 0';
-              break;
-            case 'darwin':
-              command = 'osascript -e \'tell app "System Events" to shut down\'';
-              break;
-            case 'linux':
-              command = 'systemctl poweroff';
-              break;
-            default:
-              throw new Error('Unsupported platform for shutdown');
+          if (platform === 'darwin') {
+            // İlk olarak osascript ile deneyelim
+            try {
+              await new Promise((resolve, reject) => {
+                exec('osascript -e \'tell app "System Events" to shut down\'', (error) => {
+                  if (error) {
+                    console.log('osascript shutdown failed, trying alternative method...');
+                    reject(error);
+                  } else {
+                    shutdownSuccess = true;
+                    resolve(true);
+                  }
+                });
+              });
+            } catch (error) {
+              // Osascript başarısız olursa alternatif yöntemi dene
+              try {
+                await new Promise((resolve, reject) => {
+                  exec('osascript -e \'tell application "Finder" to shut down\'', (error) => {
+                    if (error) {
+                      reject(error);
+                    } else {
+                      shutdownSuccess = true;
+                      resolve(true);
+                    }
+                  });
+                });
+              } catch (secondError) {
+                console.error('Both shutdown methods failed:', secondError);
+                throw new Error('Shutdown failed with both methods');
+              }
+            }
+          } else {
+            // Windows ve Linux için mevcut komutları kullan
+            const command = platform === 'win32' 
+              ? 'shutdown /s /t 0' 
+              : 'systemctl poweroff';
+
+            await new Promise((resolve, reject) => {
+              exec(command, (error) => {
+                if (error) {
+                  reject(error);
+                } else {
+                  shutdownSuccess = true;
+                  resolve(true);
+                }
+              });
+            });
           }
 
-          // Önce offline durumuna geç
-          await setComputerOffline();
-
-          // Kapatma komutunu çalıştır
-          exec(command, (error) => {
-            if (error) {
-              console.error('Shutdown error:', error);
-              socket?.emit('command_response', {
-                success: false,
-                error: error.message,
-                type: 'shutdown'
-              });
-              return;
-            }
-            
+          if (shutdownSuccess) {
+            // Başarılı yanıt gönder
             socket?.emit('command_response', {
               success: true,
               message: 'Shutdown initiated',
               type: 'shutdown'
             });
 
-            // Uygulamayı kapat
+            // Bilgisayarı offline yap ve uygulamayı kapat
+            await setComputerOffline();
             setTimeout(() => {
               app.quit();
             }, 1000);
-          });
+          }
         }
       } catch (error: any) {
         console.error('Command execution error:', error);
@@ -509,4 +533,58 @@ ipcMain.on('system-shutdown', () => {
     }
     console.log('System shutdown initiated');
   });
+});
+
+// System shutdown IPC handler
+ipcMain.handle('system-shutdown', async () => {
+  try {
+    const platform = process.platform;
+    let shutdownSuccess = false;
+
+    if (platform === 'darwin') {
+      try {
+        await new Promise((resolve, reject) => {
+          exec('osascript -e \'tell app "System Events" to shut down\'', (error) => {
+            if (error) reject(error);
+            else {
+              shutdownSuccess = true;
+              resolve(true);
+            }
+          });
+        });
+      } catch (error) {
+        // Try alternative method
+        await new Promise((resolve, reject) => {
+          exec('osascript -e \'tell application "Finder" to shut down\'', (error) => {
+            if (error) reject(error);
+            else {
+              shutdownSuccess = true;
+              resolve(true);
+            }
+          });
+        });
+      }
+    } else {
+      const command = platform === 'win32' ? 'shutdown /s /t 0' : 'systemctl poweroff';
+      await new Promise((resolve, reject) => {
+        exec(command, (error) => {
+          if (error) reject(error);
+          else {
+            shutdownSuccess = true;
+            resolve(true);
+          }
+        });
+      });
+    }
+
+    if (shutdownSuccess) {
+      await setComputerOffline();
+      setTimeout(() => app.quit(), 1000);
+      return { success: true };
+    }
+    return { success: false, error: 'Shutdown command failed' };
+  } catch (error: any) {
+    console.error('Shutdown error:', error);
+    return { success: false, error: error.message };
+  }
 });
