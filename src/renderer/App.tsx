@@ -7,6 +7,7 @@ import { LoginPage } from "./pages/login"
 import { SignUpPage } from "./pages/signup"
 import { DashboardPage } from "./pages/dashboard"
 import { SessionHistoryPage } from "./pages/session/history"
+import { ChatPage } from "./pages/chat"
 import { useEffect, useState } from 'react';
 import { useComputerStore } from './lib/stores/computer-store';
 import { useCustomerAuthStore } from './lib/stores/customer-auth-store';
@@ -80,6 +81,10 @@ const routes = createHashRouter([
           {
             path: "order-history",
             element: <OrderHistoryPage />
+          },
+          {
+            path: "chat",
+            element: <ChatPage />
           }
         ]
       },

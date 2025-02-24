@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { Home, History, UserCircle, LogOut, ShoppingBag, ClipboardList } from 'lucide-react'
+import { Home, History, UserCircle, LogOut, ShoppingBag, ClipboardList, MessageCircle } from 'lucide-react'
 import { useCustomerAuthStore } from '@/renderer/lib/stores/customer-auth-store'
 import { useTranslation } from 'react-i18next'
 
@@ -14,6 +14,7 @@ export function Sidebar() {
     { icon: ClipboardList, path: '/app/order-history', label: t('navigation.orderHistory') },
     { icon: History, path: '/app/session/history', label: t('navigation.history') },
     { icon: UserCircle, path: '/app/profile', label: t('navigation.profile') },
+    { icon: MessageCircle, path: '/app/chat', label: 'Sohbet' },
   ]
 
   return (
